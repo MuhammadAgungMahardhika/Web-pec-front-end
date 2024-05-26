@@ -4,25 +4,47 @@ import Button from 'react-bootstrap/Button';
 import Modal from 'react-bootstrap/Modal';
 import Form from 'react-bootstrap/Form';
 import InputGroup from 'react-bootstrap/InputGroup';
-import Row from 'react-bootstrap/Row';
-import Col from 'react-bootstrap/Col';
+
 
 function AddProduct() {
   const [show, setShow] = useState(false);
-
+  const [name,setName] = useState("");
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
 
   const [validated, setValidated] = useState(false);
 
-  const handleSubmit = (event:any) => {
-    const form = event.currentTarget;
-    if (form.checkValidity() === false) {
-      event.preventDefault();
-      event.stopPropagation();
-    }
+  const handleNameChange = (event:any)=> {
+    setName(event.target.value);
+   
+  }
+  const handleSubmit = async (event:any) => {
+    const data = { name };
+    const endpoint = "https://your-api-endpoint.com/api/names"
+    const token = 'YOUR_JWT_TOKEN_HERE';
+    try {
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(data),
+        });
 
-    setValidated(true);
+        if (response.ok) {
+            const jsonResponse = await response.json();
+            console.log('Success:', jsonResponse);
+            // Handle successful response
+        } else {
+            console.error('Failed to submit:', response.statusText);
+            // Handle error response
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        // Handle fetch error
+    }
+    setShow(true)
   };
 
   return (
@@ -36,26 +58,21 @@ function AddProduct() {
           <Modal.Title>Menambahkan Satuan Produk</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-            <Form noValidate validated={validated} onSubmit={handleSubmit}>
-                <Row className="mb-3">
-                    <Form.Group as={Col} md="4" controlId="validationCustom01">
-                    <Form.Label>First name</Form.Label>
-                    <Form.Control
-                        required
-                        type="text"
-                        placeholder="First name"
-                        defaultValue="Mark"
-                    />
-                    <Form.Control.Feedback>Looks good!</Form.Control.Feedback>
-                    </Form.Group>
-                </Row>
-            </Form>
+            <InputGroup className="mb-3">
+              <InputGroup.Text id="basic-addon1">Satuan</InputGroup.Text>
+              <Form.Control
+                placeholder="Satuan"
+                aria-label="Satuan"
+                aria-describedby="Satuan"
+                onChange={handleNameChange}
+              />
+          </InputGroup>
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Tutup
           </Button>
-          <Button variant="primary" onClick={handleClose}>
+          <Button variant="primary" onClick={handleSubmit}>
            Simpan
           </Button>
         </Modal.Footer>

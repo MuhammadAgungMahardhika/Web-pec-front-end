@@ -1,9 +1,9 @@
 'use client';
 
-import React, {  useState } from 'react';
+import React, { useState } from 'react';
 import Image from "next/image";
 import Link from 'next/link';
-import {usePathname} from 'next/navigation';
+import { usePathname } from 'next/navigation';
 
 interface submenu {
     name: string,
@@ -13,7 +13,7 @@ interface submenu {
 interface menuItem {
     name: string,
     icon: string,
-    link? : string,
+    link?: string,
     submenu?: Array<submenu>
 }
 
@@ -21,7 +21,6 @@ interface menu {
     name: string,
     items: Array<menuItem>
 }
-
 
 const menues: menu[] = [
     {
@@ -40,7 +39,6 @@ const menues: menu[] = [
             {
                 name: "Master",
                 icon: "bi bi-stack",
-                link: "/master",
                 submenu: [
                     {
                         name: "produk",
@@ -56,7 +54,7 @@ const menues: menu[] = [
                     },
                     {
                         name: "signa",
-                        link: "/master/signa"
+                        link: "/master/product-signa"
                     },
                 ]
             }
@@ -64,17 +62,16 @@ const menues: menu[] = [
     },
 ];
 
-
 const Sidebar = () => {
     const pathname = usePathname();
     const [activeMenu, setActiveMenu] = useState(0);
     const [openedSubmenues, setOpenedSubmenues] = useState<number[]>([]);
 
     const clickItem = (index: number, sub: any) => {
-        if(sub) {
-            let submenues = openedSubmenues;
-            if(submenues.includes(index)) {
-                submenues = submenues.filter(v => v != index);
+        let submenues = openedSubmenues;
+        if (sub) {
+            if (submenues.includes(index)) {
+                submenues = submenues.filter(v => v !== index);
             } else {
                 submenues = [...openedSubmenues, index];
             }
@@ -82,50 +79,47 @@ const Sidebar = () => {
         }
     }
 
-    const renderSubmenues = (submenues: submenu[]) => {
+    const renderSubmenues = (submenues: submenu[], parentIndex: number) => {
         return submenues.map((submenu, index) => {
             return (
-                <li className="submenu-item" key={index}>
-                        <Link href={submenu.link} className="submenu-link">{submenu.name}</Link>
+                <li className="submenu-item" key={`${parentIndex}-${index}`}>
+                    <Link href={submenu.link} className="submenu-link">{submenu.name}</Link>
                 </li>
             )
         })
     }
 
-
-    const renderMenuItems = (menuItems: menuItem[]) => {
+    const renderMenuItems = (menuItems: menuItem[], parentIndex: number) => {
         return menuItems.map((item, index) => {
             let itemClassname = "sidebar-item cursor-pointer";
             let submenuesClassname = "submenu";
             if (item.submenu) itemClassname += " has-sub";
             const path = "/" + pathname.split('/')[1];
-            if(path == item.link) itemClassname += " active";
-            if(openedSubmenues.includes(index)) submenuesClassname += " submenu-open";
+            if (path === item.link) itemClassname += " active";
+            if (openedSubmenues.includes(index)) submenuesClassname += " submenu-open";
             return (
-                <li className={itemClassname} key={index} onClick={() => clickItem(index, item.submenu)}>
+                <li className={itemClassname} key={`${parentIndex}-${index}`} onClick={() => clickItem(index, item.submenu)}>
                     <Link href={item.link || "#"} className='sidebar-link' onClick={e => item.submenu && e.preventDefault()}>
                         <i className={item.icon}></i>
                         <span>{item.name}</span>
                     </Link>
                     {item.submenu && (
                         <ul className={submenuesClassname}>
-                            {renderSubmenues(item.submenu)}
+                            {renderSubmenues(item.submenu, index)}
                         </ul>
                     )}
                 </li>
             )
-
         });
     }
-
 
     const renderMenu = () => {
         return menues.map((menu, index) => {
             return (
-                <>
-                    <li className="sidebar-title" key={index}>{menu.name}</li>
-                    {renderMenuItems(menu.items)}
-                </>
+                <React.Fragment key={index}>
+                    <li className="sidebar-title">{menu.name}</li>
+                    {renderMenuItems(menu.items, index)}
+                </React.Fragment>
             )
         })
     }
@@ -137,7 +131,7 @@ const Sidebar = () => {
                     <div className="logo">
                         <a href="index.html"><Image src="/assets/images/logo/logo.svg" alt="logo" width={100} height={100} /></a>
                     </div>
-                    <div className="theme-toggle d-flex gap-2  align-items-center mt-2">
+                    <div className="theme-toggle d-flex gap-2 align-items-center mt-2">
                         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
                             role="img" className="iconify iconify--system-uicons" width="20" height="20"
                             preserveAspectRatio="xMidYMid meet" viewBox="0 0 21 21">
@@ -154,7 +148,7 @@ const Sidebar = () => {
                             </g>
                         </svg>
                         <div className="form-check form-switch fs-6">
-                            <input className="form-check-input  me-0" type="checkbox" id="toggle-dark" style={{ cursor: "pointer" }} />
+                            <input className="form-check-input me-0" type="checkbox" id="toggle-dark" style={{ cursor: "pointer" }} />
                             <label className="form-check-label"></label>
                         </div>
                         <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true"
@@ -165,7 +159,7 @@ const Sidebar = () => {
                             </path>
                         </svg>
                     </div>
-                    <div className="sidebar-toggler  x">
+                    <div className="sidebar-toggler x">
                         <a href="#" className="sidebar-hide d-xl-none d-block"><i className="bi bi-x bi-middle"></i></a>
                     </div>
                 </div>
