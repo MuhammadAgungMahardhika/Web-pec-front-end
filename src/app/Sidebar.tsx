@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import React, { useState } from 'react';
 import Image from "next/image";
@@ -6,8 +6,8 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 
 interface submenu {
-    name: string,
-    link: string
+  name: string;
+  link: string;
 }
 
 interface menuItem {
@@ -18,8 +18,8 @@ interface menuItem {
 }
 
 interface menu {
-    name: string,
-    items: Array<menuItem>
+  name: string;
+  items: Array<menuItem>;
 }
 
 const menues: menu[] = [
@@ -63,9 +63,9 @@ const menues: menu[] = [
 ];
 
 const Sidebar = () => {
-    const pathname = usePathname();
-    const [activeMenu, setActiveMenu] = useState(0);
-    const [openedSubmenues, setOpenedSubmenues] = useState<number[]>([]);
+  const pathname = usePathname();
+  const [activeMenu, setActiveMenu] = useState(0);
+  const [openedSubmenues, setOpenedSubmenues] = useState<number[]>([]);
 
     const clickItem = (index: number, sub: any) => {
         let submenues = openedSubmenues;
