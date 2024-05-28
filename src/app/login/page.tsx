@@ -1,18 +1,23 @@
-import React from 'react'
+import React from "react";
+import LoginForm from "../components/login/LoginForm";
 
 const login = () => {
   return (
     <>
-    <div className="card">
+      <div className="card">
         <div className="card-header">
-            <h3>Login</h3>
+          <h3>Login</h3>
         </div>
         <div className="card-body">
-            Login
+          <div className="card">
+            <div className="card-body shadow">
+              <LoginForm></LoginForm>
+            </div>
+          </div>
         </div>
-    </div>
+      </div>
     </>
-  )
-}
+  );
+};
 
-export default login
+export default login;
