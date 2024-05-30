@@ -3,10 +3,10 @@ import type { NextRequest } from "next/server";
 import { authMiddleware } from "../middleware/authMiddleware";
 
 // This function can be marked `async` if using `await` inside
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   // return NextResponse.redirect(new URL("/login", request.url));
 
-  const authResponse = authMiddleware(request);
+  const authResponse = await authMiddleware(request);
   if (authResponse.status !== 200) return authResponse;
 }
 

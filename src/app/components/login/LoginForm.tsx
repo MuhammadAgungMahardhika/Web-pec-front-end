@@ -39,15 +39,14 @@ function LoginForm() {
     return response;
   };
 
-  const sendTokenToServer = async (token: any) => {
+  const sendTokenToServer = async (token: any, refreshToken: any) => {
     try {
-      console.log(token);
       const response = await fetch("/api/set-cookie", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(token),
+        body: JSON.stringify(token, refreshToken),
       });
 
       if (!response.ok) {
@@ -64,34 +63,33 @@ function LoginForm() {
 
     // Login
     const loginResponse = await login(email, password);
+
     if (loginResponse.ok) {
       const data = await loginResponse.json();
       if (data) {
-        const token = data.access_token;
-        localStorage.setItem("token", token);
-        await sendTokenToServer(token);
+        const { token, refreshToken } = data;
+        // localStorage.setItem("token", token);
+        await sendTokenToServer(token, refreshToken);
+
+        // ambil data user jika token tidak kosong
+        if (token != null) {
+          const getUserResponse = await fetchUser(token);
+          if (getUserResponse.ok) {
+            const userData = await getUserResponse.json();
+            sessionStorage.setItem("user", JSON.stringify(userData));
+            console.log(userData);
+            router.push("/");
+          } else {
+            const errorData = await getUserResponse.json();
+            console.log(errorData);
+          }
+        }
       } else {
         console.log("no data");
       }
     } else {
       const errorData = await loginResponse.json();
       console.log(errorData);
-    }
-
-    const token: string | null = localStorage.getItem("token");
-
-    // ambil data user jika token tidak kosong
-    if (token != null) {
-      const getUserResponse = await fetchUser(token);
-      if (getUserResponse.ok) {
-        const userData = await getUserResponse.json();
-        sessionStorage.setItem("user", JSON.stringify(userData));
-        console.log(userData);
-        router.push("/transaction");
-      } else {
-        const errorData = await getUserResponse.json();
-        console.log(errorData);
-      }
     }
   };
 

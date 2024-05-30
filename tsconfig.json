@@ -28,7 +28,8 @@
     "**/*.ts",
     "**/*.tsx",
     ".next/types/**/*.ts",
-    "src/app/api/set-cookie"
+    "src/app/api/set-cookie",
+    "middleware/authMiddleware.tsx"
   ],
   "exclude": ["node_modules"]
 }

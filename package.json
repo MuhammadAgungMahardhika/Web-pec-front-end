@@ -19,6 +19,7 @@
     "bootstrap-icons": "^1.10.5",
     "eslint": "8.41.0",
     "eslint-config-next": "13.4.4",
+    "jwt-check-expiry": "^1.0.10",
     "next": "13.4.4",
     "perfect-scrollbar": "^1.5.5",
     "react": "18.2.0",

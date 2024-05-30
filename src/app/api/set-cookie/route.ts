@@ -3,8 +3,15 @@ import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
 export async function POST(req: NextRequest) {
   try {
-    const { token } = await req.json();
+    const { token, refreshToken } = await req.json();
     cookies().set("token", token, {
+      path: "/",
+      domain: "localhost",
+      maxAge: 300,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+    });
+    cookies().set("refresh_token", refreshToken, {
       path: "/",
       domain: "localhost",
       maxAge: 300,
