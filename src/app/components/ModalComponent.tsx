@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import React, { useState } from 'react';
-import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal';
+import React, { useState } from "react";
+import Button from "react-bootstrap/Button";
+import Modal from "react-bootstrap/Modal";
 
 interface ModalComponentProps {
   buttonText: string;
@@ -10,15 +10,18 @@ interface ModalComponentProps {
   inputGroup: React.ReactNode;
 }
 
-const ModalComponent : React.FC<ModalComponentProps> = ({buttonText, title,inputGroup }) => {
+const ModalComponent: React.FC<ModalComponentProps> = ({
+  buttonText,
+  title,
+  inputGroup,
+}) => {
   const [show, setShow] = useState(false);
 
   const handleClose = () => setShow(false);
   const handleShow = () => setShow(true);
-  const handleSave = ()=> {
-    handleClose()
-    
-  }
+  const handleSave = () => {
+    handleClose();
+  };
   return (
     <>
       <Button variant="primary" onClick={handleShow}>
@@ -29,9 +32,7 @@ const ModalComponent : React.FC<ModalComponentProps> = ({buttonText, title,input
         <Modal.Header closeButton>
           <Modal.Title>{title}</Modal.Title>
         </Modal.Header>
-        <Modal.Body>
-          {inputGroup}
-        </Modal.Body>
+        <Modal.Body>{inputGroup}</Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close
@@ -43,6 +44,6 @@ const ModalComponent : React.FC<ModalComponentProps> = ({buttonText, title,input
       </Modal>
     </>
   );
-}
+};
 
 export default ModalComponent;
