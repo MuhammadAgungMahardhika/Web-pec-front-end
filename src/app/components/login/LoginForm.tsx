@@ -1,5 +1,4 @@
 "use client";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "react-bootstrap";
@@ -75,18 +74,18 @@ function LoginForm() {
     if (loginResponse.ok) {
       const data = await loginResponse.json();
       if (data) {
-        const { access_token, refresh_token } = data;
-        await sendTokenToServer(access_token, refresh_token);
+        const { access_token, refresh_token } = await data;
         console.log(access_token);
         console.log(refresh_token);
+        await sendTokenToServer(access_token, refresh_token);
         // ambil data user jika token tidak kosong
-        if (access_token != null) {
+        if (access_token) {
           const getUserResponse = await fetchUser(access_token);
           if (getUserResponse.ok) {
             const userData = await getUserResponse.json();
             sessionStorage.setItem("user", JSON.stringify(userData));
             console.log(userData);
-            router.push("/");
+            router.push("/transaction");
           } else {
             const errorData = await getUserResponse.json();
             console.log(errorData);

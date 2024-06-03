@@ -3,6 +3,7 @@ const path = require("node:path");
 const dotenv = require("dotenv");
 
 const { resolve } = path;
+dotenv.config();
 
 const nextConfig = {
   webpack(config) {
@@ -20,14 +21,11 @@ const nextConfig = {
 
     return config;
   },
-};
-
-// setting env
-dotenv.config();
-module.exports = nextConfig;
-module.exports = {
   env: {
+    BASE_URL: process.env.BASE_URL,
     SECRET_KEY: process.env.SECRET_KEY,
     AUTHSERVICE_URL: process.env.AUTHSERVICE_URL,
   },
 };
+
+module.exports = nextConfig;

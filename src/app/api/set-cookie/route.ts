@@ -5,6 +5,9 @@ import jwt from "jsonwebtoken";
 
 export async function POST(req: NextRequest) {
   try {
+    // const baseUrl: string = process.env.BASE_URL as string;
+    const baseUrl = "localhost";
+
     const { access_token, refresh_token } = await req.json();
     const decodedAccessToken = jwt.decode(access_token) as jwt.JwtPayload;
     const decodedRefreshToken = jwt.decode(refresh_token) as jwt.JwtPayload;
@@ -24,24 +27,24 @@ export async function POST(req: NextRequest) {
 
     cookies().set("access_token", access_token, {
       path: "/",
-      domain: "localhost",
+      domain: baseUrl,
       maxAge: maxAgeAccessToken,
-      secure: process.env.NODE_ENV === "production",
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "development",
     });
     cookies().set("refresh_token", refresh_token, {
       path: "/",
-      domain: "localhost",
+      domain: baseUrl,
       maxAge: maxAgeRefreshToken,
-      secure: process.env.NODE_ENV === "production",
+      httpOnly: false,
+      secure: process.env.NODE_ENV === "development",
     });
-
     const response = NextResponse.json({
-      message:
-        "Token set successfully" +
-        "max access token :" +
-        maxAgeAccessToken +
-        "max refresh token : " +
-        maxAgeRefreshToken,
+      message: "Token set successfully",
+      access_token: access_token,
+      refresh_token: refresh_token,
+      maxAgeAccessToken: maxAgeAccessToken,
+      maxAgeRefreshToken: maxAgeRefreshToken,
     });
     return response;
   } catch (error) {
