@@ -65,6 +65,17 @@ function LoginForm() {
     }
   };
 
+  const redirectToMenu = (roleId: number) => {
+    if (roleId == 2) {
+      console.log("role id:" + roleId);
+      router.push("/pharmacy/dashboard");
+    } else if (roleId == 3) {
+      router.push("/doctor/dashboard");
+    } else if (roleId == 4) {
+      router.push("/poli/dashboard");
+    }
+  };
+
   const handleSubmit = async (e: any) => {
     e.preventDefault();
 
@@ -83,9 +94,9 @@ function LoginForm() {
           const getUserResponse = await fetchUser(access_token);
           if (getUserResponse.ok) {
             const userData = await getUserResponse.json();
+            const userRole = userData.id_role as number;
             sessionStorage.setItem("user", JSON.stringify(userData));
-            console.log(userData);
-            router.push("/transaction");
+            redirectToMenu(userRole);
           } else {
             const errorData = await getUserResponse.json();
             console.log(errorData);

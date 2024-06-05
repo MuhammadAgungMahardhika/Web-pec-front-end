@@ -12,8 +12,5 @@ export function middleware(request: NextRequest) {
 
 // See "Matching Paths" below to learn more
 export const config = {
-  matcher: [
-    "/", // Terapkan middleware pada halaman utama
-    "/transaction", // Terapkan middleware pada semua rute di bawah /transaction
-  ],
+  matcher: "/((?!api|login|static|.*\\..*|_next).*)",
 };

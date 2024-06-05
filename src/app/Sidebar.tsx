@@ -1,9 +1,18 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext, createContext } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+// Define context for user role
+interface UserRoleContextType {
+  role: string;
+}
+
+const UserRoleContext = createContext<UserRoleContextType | undefined>(
+  undefined
+);
 
 interface submenu {
   name: string;
@@ -22,73 +31,114 @@ interface menu {
   items: Array<menuItem>;
 }
 
-const menues: menu[] = [
-  {
-    name: "Menu",
-    items: [
-      {
-        name: "Dashboard",
-        icon: "bi bi-grid-fill",
-        link: "/",
-      },
-      {
-        name: "Transaksi",
-        icon: "bi bi-grid-fill",
-        link: "/transaction",
-      },
-      {
-        name: "Master",
-        icon: "bi bi-stack",
-        submenu: [
-          {
-            name: "produk",
-            link: "/master/product",
-          },
-          {
-            name: "Satuan produk",
-            link: "/master/product-unit",
-          },
-          {
-            name: "Kategori produk",
-            link: "/master/product-category",
-          },
-          {
-            name: "signa",
-            link: "/master/product-signa",
-          },
-        ],
-      },
-    ],
-  },
-];
-
 const Sidebar = () => {
   const pathname = usePathname();
-  const [activeMenu, setActiveMenu] = useState(0);
   const [openedSubmenues, setOpenedSubmenues] = useState<number[]>([]);
+  const [activeSubmenu, setActiveSubmenu] = useState<number | null>(null);
 
-  const clickItem = (index: number, sub: any) => {
-    let submenues = openedSubmenues;
-    if (sub) {
-      if (submenues.includes(index)) {
-        submenues = submenues.filter((v) => v !== index);
-      } else {
-        submenues = [...openedSubmenues, index];
-      }
-      setOpenedSubmenues(submenues);
+  const userRoleContext = useContext(UserRoleContext);
+  const userRole = userRoleContext ? userRoleContext.role : "pharmacist";
+
+  const getMenu = (role: string): menu[] => {
+    switch (role) {
+      case "pharmacist":
+        return [
+          {
+            name: "Menu",
+            items: [
+              {
+                name: "Dashboard",
+                icon: "bi bi-grid-fill",
+                link: "/pharmacy/dashboard",
+              },
+              {
+                name: "Transaction",
+                icon: "bi bi-grid-fill",
+                link: "/pharmacy/transaction",
+              },
+              {
+                name: "Master",
+                icon: "bi bi-stack",
+                submenu: [
+                  {
+                    name: "Produk",
+                    link: "/pharmacy/master/product",
+                  },
+                ],
+              },
+            ],
+          },
+        ];
+      case "doctor":
+        return [
+          {
+            name: "Menu",
+            items: [
+              {
+                name: "Dashboard",
+                icon: "bi bi-grid-fill",
+                link: "/doctor/dashboard",
+              },
+              {
+                name: "Master",
+                icon: "bi bi-stack",
+                submenu: [
+                  {
+                    name: "Patient",
+                    link: "/doctor/master/patient",
+                  },
+                ],
+              },
+            ],
+          },
+        ];
+      default:
+        return [
+          {
+            name: "Menu",
+            items: [
+              {
+                name: "Dashboard",
+                icon: "bi bi-grid-fill",
+                link: "/",
+              },
+              {
+                name: "Transaksi",
+                icon: "bi bi-grid-fill",
+                link: "/transaction",
+              },
+            ],
+          },
+        ];
     }
   };
 
-  const renderSubmenues = (submenues: submenu[], parentIndex: number) => {
-    return submenues.map((submenu, index) => {
-      return (
-        <li className="submenu-item" key={`${parentIndex}-${index}`}>
-          <Link href={submenu.link} className="submenu-link">
-            {submenu.name}
-          </Link>
-        </li>
+  const menues = getMenu(userRole);
+
+  const clickItem = (index: number, sub: any) => {
+    if (sub) {
+      setActiveSubmenu((prevActiveSubmenu) =>
+        prevActiveSubmenu === index ? null : index
       );
-    });
+    }
+  };
+
+  const isItemActive = (link?: string) => {
+    if (!link) return false;
+    const currentPath = pathname.split("?")[0];
+    return currentPath === link || currentPath.startsWith(link);
+  };
+
+  const renderSubmenues = (submenues: submenu[], parentIndex: number) => {
+    return submenues.map((submenu, index) => (
+      <li
+        className={`submenu-item ${isItemActive(submenu.link) ? "active" : ""}`}
+        key={`${parentIndex}-${index}`}>
+        <Link href={submenu.link} className="submenu-link">
+          {submenu.name}
+        </Link>
+      </li>
+    ));
   };
 
   const renderMenuItems = (menuItems: menuItem[], parentIndex: number) => {
@@ -96,9 +146,8 @@ const Sidebar = () => {
       let itemClassname = "sidebar-item cursor-pointer";
       let submenuesClassname = "submenu";
       if (item.submenu) itemClassname += " has-sub";
-      const path = "/" + pathname.split("/")[1];
-      if (path === item.link) itemClassname += " active";
-      if (openedSubmenues.includes(index))
+      if (isItemActive(item.link)) itemClassname += " active";
+      if (openedSubmenues.includes(index) || activeSubmenu === index)
         submenuesClassname += " submenu-open";
       return (
         <li
@@ -123,14 +172,12 @@ const Sidebar = () => {
   };
 
   const renderMenu = () => {
-    return menues.map((menu, index) => {
-      return (
-        <React.Fragment key={index}>
-          <li className="sidebar-title">{menu.name}</li>
-          {renderMenuItems(menu.items, index)}
-        </React.Fragment>
-      );
-    });
+    return menues.map((menu, index) => (
+      <React.Fragment key={index}>
+        <li className="sidebar-title">{menu.name}</li>
+        {renderMenuItems(menu.items, index)}
+      </React.Fragment>
+    ));
   };
 
   return (
