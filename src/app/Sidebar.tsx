@@ -47,14 +47,19 @@ const Sidebar = () => {
             name: "Menu",
             items: [
               {
-                name: "Dashboard",
+                name: "Beranda",
                 icon: "bi bi-grid-fill",
                 link: "/pharmacy/dashboard",
               },
               {
-                name: "Transaction",
+                name: "Daftar Pasien",
                 icon: "bi bi-grid-fill",
-                link: "/pharmacy/transaction",
+                link: "/pharmacy/list-patient",
+              },
+              {
+                name: "Order",
+                icon: "bi bi-grid-fill",
+                link: "/pharmacy/order",
               },
               {
                 name: "Master",
@@ -63,6 +68,14 @@ const Sidebar = () => {
                   {
                     name: "Produk",
                     link: "/pharmacy/master/product",
+                  },
+                  {
+                    name: "Kategori Produk",
+                    link: "/pharmacy/master/product-category",
+                  },
+                  {
+                    name: "Satuan Produk",
+                    link: "/pharmacy/master/product-unit",
                   },
                 ],
               },
