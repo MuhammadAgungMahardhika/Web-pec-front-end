@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     cookies().set("access_token", access_token, {
       path: "/",
       domain: baseUrl,
-      maxAge: maxAgeAccessToken,
+      maxAge: maxAgeAccessToken - 10,
       httpOnly: false,
       secure: process.env.NODE_ENV === "development",
     });
