@@ -67,7 +67,6 @@ function LoginForm() {
 
   const redirectToMenu = (roleId: number) => {
     if (roleId == 2) {
-      console.log("role id:" + roleId);
       router.push("/pharmacy/dashboard");
     } else if (roleId == 3) {
       router.push("/doctor/dashboard");

@@ -1,18 +1,9 @@
 "use client";
 
-import React, { useState, useContext, createContext } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-// Define context for user role
-interface UserRoleContextType {
-  role: string;
-}
-
-const UserRoleContext = createContext<UserRoleContextType | undefined>(
-  undefined
-);
 
 interface submenu {
   name: string;
@@ -36,9 +27,21 @@ const Sidebar = () => {
   const [openedSubmenues, setOpenedSubmenues] = useState<number[]>([]);
   const [activeSubmenu, setActiveSubmenu] = useState<number | null>(null);
 
-  const userRoleContext = useContext(UserRoleContext);
-  const userRole = userRoleContext ? userRoleContext.role : "pharmacist";
+  let userRoleContext: any = sessionStorage.getItem("user");
+  if (userRoleContext) {
+    userRoleContext = JSON.parse(userRoleContext);
+  }
+  const userRole: number = userRoleContext ? userRoleContext.id_role : 0;
 
+  const checkRole = (roleId: number): string => {
+    if (roleId == 1) {
+      return "doctor";
+    } else if (roleId == 2) {
+      return "pharmacist";
+    } else {
+      return "guest";
+    }
+  };
   const getMenu = (role: string): menu[] => {
     switch (role) {
       case "pharmacist":
@@ -106,6 +109,7 @@ const Sidebar = () => {
           },
         ];
       default:
+        // guest
         return [
           {
             name: "Menu",
@@ -115,18 +119,13 @@ const Sidebar = () => {
                 icon: "bi bi-grid-fill",
                 link: "/",
               },
-              {
-                name: "Transaksi",
-                icon: "bi bi-grid-fill",
-                link: "/transaction",
-              },
             ],
           },
         ];
     }
   };
 
-  const menues = getMenu(userRole);
+  const menues = getMenu(checkRole(userRole));
 
   const clickItem = (index: number, sub: any) => {
     if (sub) {
