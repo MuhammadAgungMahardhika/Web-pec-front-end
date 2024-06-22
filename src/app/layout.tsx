@@ -5,6 +5,7 @@ import "../scss/iconly.scss";
 import "../scss/themes/dark/app-dark.scss";
 import Sidebar from "./Sidebar";
 
+const baseUrl = process.env.BASE_URL;
 export const metadata: Metadata = {
   title: "Padang Eye Center",
   description: "Simrs Padang Eye Center",
@@ -31,6 +32,11 @@ export default function RootLayout({
     <html lang="en" data-bs-theme="light">
       <head>
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+        <link
+          rel="preload"
+          href="/_next/static/css/app/layout.css?v=1718770909792"
+          as="style"
+        />
       </head>
       <body className="light dark">
         <div id="app">

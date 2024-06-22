@@ -2,8 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import isJwtTokenExpired, { decode } from "jwt-check-expiry";
 import jwt from "jsonwebtoken";
 
-const secretKey: string = process.env.SECRET_KEY as string;
-
 const isTokenExpired = (token: any) => {
   try {
     const isExpired = isJwtTokenExpired(token);
@@ -17,7 +15,7 @@ const isTokenExpired = (token: any) => {
 export function authMiddleware(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
-  console.log("Secret Key:", secretKey);
+
   console.log("access to : " + accessToken);
   console.log("refresh to : " + refreshToken);
   if (!accessToken || !refreshToken) {

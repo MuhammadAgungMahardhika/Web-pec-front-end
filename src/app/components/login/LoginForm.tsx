@@ -13,13 +13,13 @@ function LoginForm() {
   const authserviceUrl = process.env.AUTHSERVICE_URL;
 
   const fetchUser = async (token: string) => {
-    const data = await fetch(authserviceUrl + "/me", {
+    const response = await fetch(authserviceUrl + "/me", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    return data;
+    return response;
   };
 
   const login = async (email: string, password: string) => {
@@ -38,31 +38,21 @@ function LoginForm() {
     return response;
   };
 
-  const sendTokenToServer = async (token: any, refreshToken: any) => {
+  const sendTokenToServer = async (accessToken: any, refreshToken: any) => {
     const data = {
-      access_token: token,
+      access_token: accessToken,
       refresh_token: refreshToken,
     };
-    try {
-      const response = await fetch("/api/set-cookie", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(data),
-      });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`Error setting cookie: ${errorData.message}`);
-      } else {
-        const data = await response.json();
+    const response = await fetch("/api/set-cookie", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(data),
+    });
 
-        console.log(data);
-      }
-    } catch (error) {
-      console.error("Error setting cookie:", error);
-    }
+    return response;
   };
 
   const handleSubmit = async (e: any) => {
@@ -74,16 +64,19 @@ function LoginForm() {
     if (loginResponse.ok) {
       const data = await loginResponse.json();
       if (data) {
-        const { access_token, refresh_token } = await data;
+        const { access_token, refresh_token } = data.data;
         console.log(access_token);
         console.log(refresh_token);
-        await sendTokenToServer(access_token, refresh_token);
+        const sendTokenResponse = await sendTokenToServer(
+          access_token,
+          refresh_token
+        );
         // ambil data user jika token tidak kosong
-        if (access_token) {
+        if (sendTokenResponse.ok) {
           const getUserResponse = await fetchUser(access_token);
           if (getUserResponse.ok) {
             const userData = await getUserResponse.json();
-            sessionStorage.setItem("user", JSON.stringify(userData));
+            sessionStorage.setItem("user", JSON.stringify(userData.data));
             console.log(userData);
             router.push("/transaction");
           } else {
