@@ -24,7 +24,7 @@ interface menu {
 
 const menues: menu[] = [
   {
-    name: "Menu",
+    name: "Menu Farmasi",
     items: [
       {
         name: "Dashboard",
@@ -32,9 +32,9 @@ const menues: menu[] = [
         link: "/",
       },
       {
-        name: "Transaksi",
+        name: "Buat resep",
         icon: "bi bi-grid-fill",
-        link: "/transaction",
+        link: "/pharmacy/receipt",
       },
       {
         name: "Master",
@@ -94,10 +94,11 @@ const Sidebar = () => {
   const renderMenuItems = (menuItems: menuItem[], parentIndex: number) => {
     return menuItems.map((item, index) => {
       let itemClassname = "sidebar-item cursor-pointer";
+      if (item.link && pathname === item.link) {
+        itemClassname += " active";
+      }
       let submenuesClassname = "submenu";
-      if (item.submenu) itemClassname += " has-sub";
-      const path = "/" + pathname.split("/")[1];
-      if (path === item.link) itemClassname += " active";
+      if (item.submenu) itemClassname += "";
       if (openedSubmenues.includes(index))
         submenuesClassname += " submenu-open";
       return (
