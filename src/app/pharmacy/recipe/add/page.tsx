@@ -2,28 +2,42 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Breadcrumb, Form, Button, Col, Row } from "react-bootstrap";
+import Link from "next/link";
 
 interface Recipe {
+  id_patient: number;
+  id_poli: number;
+  id_doctor: string;
   no_of_receipt: string;
-  id_user: string;
   date: string;
-  date_of_service: string;
-  code_of_poli: string;
-  kind_of_medicine: string;
-  code_of_doctor: string;
+  service_date: string;
+  kind_of_medicine: number;
+  total_amount: number;
+  status: string;
+  bpjs_sep: string;
+  bpjs_iteration: string;
 }
+
+// Fungsi untuk mendapatkan tanggal sekarang dalam format YYYY-MM-DD
+const getCurrentDate = () => {
+  return new Date().toISOString().split('T')[0];
+};
 
 const AddRecipePage: React.FC = () => {
   const router = useRouter();
 
   const [newRecipe, setNewRecipe] = useState<Recipe>({
+    id_patient: 1,
+    id_poli: 2,
+    id_doctor: "",
     no_of_receipt: "",
-    id_user: "",
-    date: "",
-    date_of_service: "",
-    code_of_poli: "",
-    kind_of_medicine: "",
-    code_of_doctor: "",
+    date: getCurrentDate(),
+    service_date: getCurrentDate(),
+    kind_of_medicine: 0,
+    total_amount: 50000,
+    status: "pending",
+    bpjs_sep: "",
+    bpjs_iteration: "0",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,16 +45,26 @@ const AddRecipePage: React.FC = () => {
     setNewRecipe({ ...newRecipe, [name]: value });
   };
 
-  const handleSelectChange = (e: any) => {
+  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setNewRecipe({ ...newRecipe, [name]: value });
+    setNewRecipe({ ...newRecipe, [name]: parseInt(value, 10) });
   };
 
-  const handleAddRecipe = async (e: any) => {
+  const handleAddRecipe = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+
     try {
-      e.preventDefault();
-      // Lakukan proses penyimpanan resep ke backend, misalnya menggunakan fetch
-      console.log("New Recipe:", newRecipe);
+      const response = await fetch("http://127.0.0.1:8082/api/order", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newRecipe),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save recipe");
+      }
 
       // Redirect ke halaman lain setelah menyimpan resep
       router.push("/pharmacy/recipe"); // Ganti dengan path yang sesuai setelah berhasil menyimpan
@@ -53,7 +77,9 @@ const AddRecipePage: React.FC = () => {
   return (
     <div className="container mt-4">
       <Breadcrumb>
-        <Breadcrumb.Item href="/pharmacy/recipe">Resep Obat</Breadcrumb.Item>
+        <Breadcrumb.Item linkAs={Link} href="/pharmacy/recipe">
+          Resep Obat
+        </Breadcrumb.Item>
         <Breadcrumb.Item active>Tambah Resep Baru</Breadcrumb.Item>
       </Breadcrumb>
 
@@ -63,10 +89,58 @@ const AddRecipePage: React.FC = () => {
         </div>
         <div className="card-body">
           <Form onSubmit={handleAddRecipe}>
-            <Form.Group
-              as={Row}
-              className="mb-3"
-              controlId="formRecipeNoReceipt">
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeIdPatient">
+              <Form.Label column sm="2">
+                ID Pasien
+              </Form.Label>
+              <Col sm="10">
+                <Form.Control
+                  type="number"
+                  placeholder="Masukkan ID pasien"
+                  name="id_patient"
+                  value={newRecipe.id_patient}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  required
+                />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeIdPoli">
+              <Form.Label column sm="2">
+                ID Poli
+              </Form.Label>
+              <Col sm="10">
+                <Form.Control
+                  type="number"
+                  placeholder="Masukkan ID poli"
+                  name="id_poli"
+                  value={newRecipe.id_poli}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  required
+                />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeIdDoctor">
+              <Form.Label column sm="2">
+                Kode Dokter
+              </Form.Label>
+              <Col sm="10">
+                <Form.Control
+                  type="text"
+                  placeholder="Masukkan kode dokter"
+                  name="id_doctor"
+                  value={newRecipe.id_doctor}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  required
+                />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeNoReceipt">
               <Form.Label column sm="2">
                 No Resep
               </Form.Label>
@@ -83,23 +157,6 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeIdUser">
-              <Form.Label column sm="2">
-                ID User
-              </Form.Label>
-              <Col sm="10">
-                <Form.Control
-                  type="text"
-                  placeholder="Masukkan ID user"
-                  name="id_user"
-                  value={newRecipe.id_user}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  required
-                />
-              </Col>
-            </Form.Group>
-
             <Form.Group as={Row} className="mb-3" controlId="formRecipeDate">
               <Form.Label column sm="2">
                 Tanggal
@@ -107,9 +164,8 @@ const AddRecipePage: React.FC = () => {
               <Col sm="10">
                 <Form.Control
                   type="date"
-                  placeholder="Masukkan tanggal"
                   name="date"
-                  value={newRecipe.date}
+                  value={newRecipe.date || getCurrentDate()}
                   onChange={handleInputChange}
                   autoComplete="off"
                   required
@@ -117,19 +173,15 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group
-              as={Row}
-              className="mb-3"
-              controlId="formRecipeDateOfService">
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeServiceDate">
               <Form.Label column sm="2">
                 Tanggal Pelayanan
               </Form.Label>
               <Col sm="10">
                 <Form.Control
                   type="date"
-                  placeholder="Masukkan tanggal pelayanan"
-                  name="date_of_service"
-                  value={newRecipe.date_of_service}
+                  name="service_date"
+                  value={newRecipe.service_date || getCurrentDate()}
                   onChange={handleInputChange}
                   autoComplete="off"
                   required
@@ -137,30 +189,7 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group
-              as={Row}
-              className="mb-3"
-              controlId="formRecipeCodeOfPoli">
-              <Form.Label column sm="2">
-                Kode Poli
-              </Form.Label>
-              <Col sm="10">
-                <Form.Control
-                  type="text"
-                  placeholder="Masukkan kode poli"
-                  name="code_of_poli"
-                  value={newRecipe.code_of_poli}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  required
-                />
-              </Col>
-            </Form.Group>
-
-            <Form.Group
-              as={Row}
-              className="mb-3"
-              controlId="formRecipeMedicineType">
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeMedicineType">
               <Form.Label column sm="2">
                 Jenis Obat
               </Form.Label>
@@ -173,29 +202,77 @@ const AddRecipePage: React.FC = () => {
                   autoComplete="off"
                   required>
                   <option value="">Pilih jenis obat</option>
-                  <option value="Obat PRB">Obat PRB</option>
-                  <option value="Obat Kronis Blm Stabil">
-                    Obat Kronis Blm Stabil
-                  </option>
-                  <option value="Obat Kemoterapi">Obat Kemoterapi</option>
+                  <option value={1}>Obat PRB</option>
+                  <option value={2}>Obat Kronis Blm Stabil</option>
+                  <option value={3}>Obat Kemoterapi</option>
                 </Form.Control>
               </Col>
             </Form.Group>
 
-            <Form.Group
-              as={Row}
-              className="mb-3"
-              controlId="formRecipeCodeOfDoctor">
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeTotalAmount">
               <Form.Label column sm="2">
-                Kode Dokter
+                Jumlah Total
+              </Form.Label>
+              <Col sm="10">
+                <Form.Control
+                  type="number"
+                  placeholder="Masukkan jumlah total"
+                  name="total_amount"
+                  value={newRecipe.total_amount}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  required
+                />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeStatus">
+              <Form.Label column sm="2">
+                Status
               </Form.Label>
               <Col sm="10">
                 <Form.Control
                   type="text"
-                  placeholder="Masukkan kode dokter"
-                  name="code_of_doctor"
-                  value={newRecipe.code_of_doctor}
+                  placeholder="Masukkan status"
+                  name="status"
+                  value={newRecipe.status}
                   onChange={handleInputChange}
+                  autoComplete="off"
+                  required
+                />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeBpjsSep">
+              <Form.Label column sm="2">
+                BPJS SEP
+              </Form.Label>
+              <Col sm="10">
+                <Form.Control
+                  type="text"
+                  placeholder="Masukkan BPJS SEP"
+                  name="bpjs_sep"
+                  value={newRecipe.bpjs_sep}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  required
+                />
+              </Col>
+            </Form.Group>
+
+            <Form.Group as={Row} className="mb-3" controlId="formRecipeBpjsIteration">
+              <Form.Label column sm="2">
+                Iterasi BPJS
+              </Form.Label>
+              <Col sm="10">
+                <Form.Control
+                  type="text"
+                  placeholder="Masukkan iterasi BPJS"
+                  name="bpjs_iteration"
+                  value={newRecipe.bpjs_iteration}
+                  onChange={handleInputChange}
+                  autoComplete="off"
+                  required
                 />
               </Col>
             </Form.Group>
