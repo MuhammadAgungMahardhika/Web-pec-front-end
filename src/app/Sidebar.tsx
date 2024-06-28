@@ -34,7 +34,7 @@ const menues: menu[] = [
       {
         name: "Buat resep",
         icon: "bi bi-grid-fill",
-        link: "/pharmacy/receipt",
+        link: "/pharmacy/recipe",
       },
       {
         name: "Master",
