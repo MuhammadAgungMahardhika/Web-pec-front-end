@@ -1,3 +1,4 @@
+// components/RecipePage.tsx
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button, Table, Modal, Form } from "react-bootstrap";
@@ -6,7 +7,7 @@ import Link from "next/link";
 interface Recipe {
   id: number;
   no_of_receipt: string;
-  id_user: string;
+  id_patient: string;
   id_poli: string;
   id_doctor: string;
   date: string;
@@ -15,14 +16,16 @@ interface Recipe {
 }
 
 const RecipePage: React.FC = () => {
-  const pharmacyServiceUrl = process.env.PHARMACYSERVICE_URL || "";
+  const pharmacyServiceUrl = "http://localhost:8082/api";
+  // const pharmacyServiceUrl = process.env.PHARMACYSERVICE_URL;
+  console.log(pharmacyServiceUrl);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [showModal, setShowModal] = useState(false);
 
   const [newRecipe, setNewRecipe] = useState<Recipe>({
     id: 0,
     no_of_receipt: "",
-    id_user: "",
+    id_patient: "",
     date: "",
     date_of_service: "",
     id_poli: "",
@@ -33,10 +36,14 @@ const RecipePage: React.FC = () => {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/api/recipes`);
+        const response = await fetch(`${pharmacyServiceUrl}/order`);
         if (response.ok) {
           const data = await response.json();
-          setRecipes(data);
+          if (data.status === "success") {
+            setRecipes(data.data); // Assuming data.data contains the array of recipes
+          } else {
+            console.error("Failed to load recipes:", data.message);
+          }
         } else {
           console.error("Failed to load recipes:", response.statusText);
         }
@@ -59,13 +66,15 @@ const RecipePage: React.FC = () => {
 
   const handleDeleteRecipe = async (recipeToDelete: Recipe) => {
     try {
-      const response = await fetch(`${pharmacyServiceUrl}/hapusresep`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(recipeToDelete),
-      });
+      const response = await fetch(
+        `${pharmacyServiceUrl}/order/${recipeToDelete.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         console.log("Recipe deleted successfully:", recipeToDelete);
@@ -91,8 +100,10 @@ const RecipePage: React.FC = () => {
           <h3>Resep Obat</h3>
         </div>
         <div className="card-body">
-          <Link href="/pharmacy/recipe/add" className="btn btn-primary mb-3">
-            Tambah Resep
+          <Link href="/pharmacy/recipe/add" passHref>
+            <Button variant="primary" className="mb-3">
+              Tambah Resep
+            </Button>
           </Link>
 
           <Table striped bordered hover>
@@ -114,13 +125,18 @@ const RecipePage: React.FC = () => {
                 <tr key={recipe.id}>
                   <td>{index + 1}</td>
                   <td>{recipe.no_of_receipt}</td>
-                  <td>{recipe.id_user}</td>
+                  <td>{recipe.id_patient}</td>
                   <td>{recipe.date}</td>
                   <td>{recipe.date_of_service}</td>
                   <td>{recipe.id_poli}</td>
                   <td>{recipe.kind_of_medicine}</td>
                   <td>{recipe.id_doctor}</td>
                   <td>
+                    <Link
+                      href={`/pharmacy/recipe/detail/${recipe.id}`}
+                      passHref>
+                      Detail
+                    </Link>
                     <Button
                       variant="danger"
                       onClick={() => handleDeleteRecipe(recipe)}>
@@ -155,8 +171,8 @@ const RecipePage: React.FC = () => {
                   <Form.Control
                     type="text"
                     placeholder="Masukkan ID user"
-                    name="id_user"
-                    value={newRecipe.id_user}
+                    name="id_patient"
+                    value={newRecipe.id_patient}
                     onChange={handleInputChange}
                   />
                 </Form.Group>

@@ -10,7 +10,7 @@ interface Recipe {
   id_doctor: string;
   no_of_receipt: string;
   date: string;
-  service_date: string;
+  date_of_service: string;
   kind_of_medicine: number;
   total_amount: number;
   status: string;
@@ -20,7 +20,7 @@ interface Recipe {
 
 // Fungsi untuk mendapatkan tanggal sekarang dalam format YYYY-MM-DD
 const getCurrentDate = () => {
-  return new Date().toISOString().split('T')[0];
+  return new Date().toISOString().split("T")[0];
 };
 
 const AddRecipePage: React.FC = () => {
@@ -32,7 +32,7 @@ const AddRecipePage: React.FC = () => {
     id_doctor: "",
     no_of_receipt: "",
     date: getCurrentDate(),
-    service_date: getCurrentDate(),
+    date_of_service: getCurrentDate(),
     kind_of_medicine: 0,
     total_amount: 50000,
     status: "pending",
@@ -45,12 +45,12 @@ const AddRecipePage: React.FC = () => {
     setNewRecipe({ ...newRecipe, [name]: value });
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
     setNewRecipe({ ...newRecipe, [name]: parseInt(value, 10) });
   };
 
-  const handleAddRecipe = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleAddRecipe = async (e: any) => {
     e.preventDefault();
 
     try {
@@ -89,7 +89,10 @@ const AddRecipePage: React.FC = () => {
         </div>
         <div className="card-body">
           <Form onSubmit={handleAddRecipe}>
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeIdPatient">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeIdPatient">
               <Form.Label column sm="2">
                 ID Pasien
               </Form.Label>
@@ -123,7 +126,10 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeIdDoctor">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeIdDoctor">
               <Form.Label column sm="2">
                 Kode Dokter
               </Form.Label>
@@ -140,7 +146,10 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeNoReceipt">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeNoReceipt">
               <Form.Label column sm="2">
                 No Resep
               </Form.Label>
@@ -173,15 +182,18 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeServiceDate">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeServiceDate">
               <Form.Label column sm="2">
                 Tanggal Pelayanan
               </Form.Label>
               <Col sm="10">
                 <Form.Control
                   type="date"
-                  name="service_date"
-                  value={newRecipe.service_date || getCurrentDate()}
+                  name="date_of_service"
+                  value={newRecipe.date_of_service || getCurrentDate()}
                   onChange={handleInputChange}
                   autoComplete="off"
                   required
@@ -189,7 +201,10 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeMedicineType">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeMedicineType">
               <Form.Label column sm="2">
                 Jenis Obat
               </Form.Label>
@@ -209,7 +224,10 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeTotalAmount">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeTotalAmount">
               <Form.Label column sm="2">
                 Jumlah Total
               </Form.Label>
@@ -260,7 +278,10 @@ const AddRecipePage: React.FC = () => {
               </Col>
             </Form.Group>
 
-            <Form.Group as={Row} className="mb-3" controlId="formRecipeBpjsIteration">
+            <Form.Group
+              as={Row}
+              className="mb-3"
+              controlId="formRecipeBpjsIteration">
               <Form.Label column sm="2">
                 Iterasi BPJS
               </Form.Label>
