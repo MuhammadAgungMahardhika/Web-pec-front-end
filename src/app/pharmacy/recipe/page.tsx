@@ -15,7 +15,8 @@ interface Recipe {
 }
 
 const RecipePage: React.FC = () => {
-  const pharmacyServiceUrl = process.env.PHARMACYSERVICE_URL || "";
+  // const pharmacyServiceUrl = process.env.PHARMACYSERVICE_URL || "";
+  const pharmacyServiceUrl = "http://127.0.0.1:8082/api/order";
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [showModal, setShowModal] = useState(false);
 
@@ -33,10 +34,10 @@ const RecipePage: React.FC = () => {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/api/recipes`);
+        const response = await fetch(`${pharmacyServiceUrl}`);
         if (response.ok) {
-          const data = await response.json();
-          setRecipes(data);
+          const data = await response.json(); console.log(data)
+          setRecipes(data.data);
         } else {
           console.error("Failed to load recipes:", response.statusText);
         }
@@ -59,7 +60,7 @@ const RecipePage: React.FC = () => {
 
   const handleDeleteRecipe = async (recipeToDelete: Recipe) => {
     try {
-      const response = await fetch(`${pharmacyServiceUrl}/hapusresep`, {
+      const response = await fetch(`${pharmacyServiceUrl}/${recipeToDelete.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",

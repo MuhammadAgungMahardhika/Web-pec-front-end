@@ -10,7 +10,7 @@ interface Recipe {
   id_doctor: string;
   no_of_receipt: string;
   date: string;
-  service_date: string;
+  date_of_service: string;
   kind_of_medicine: number;
   total_amount: number;
   status: string;
@@ -32,7 +32,7 @@ const AddRecipePage: React.FC = () => {
     id_doctor: "",
     no_of_receipt: "",
     date: getCurrentDate(),
-    service_date: getCurrentDate(),
+    date_of_service: getCurrentDate(),
     kind_of_medicine: 0,
     total_amount: 50000,
     status: "pending",
@@ -45,7 +45,7 @@ const AddRecipePage: React.FC = () => {
     setNewRecipe({ ...newRecipe, [name]: value });
   };
 
-  const handleSelectChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
     setNewRecipe({ ...newRecipe, [name]: parseInt(value, 10) });
   };
@@ -180,8 +180,8 @@ const AddRecipePage: React.FC = () => {
               <Col sm="10">
                 <Form.Control
                   type="date"
-                  name="service_date"
-                  value={newRecipe.service_date || getCurrentDate()}
+                  name="date_of_service"
+                  value={newRecipe.date_of_service || getCurrentDate()}
                   onChange={handleInputChange}
                   autoComplete="off"
                   required
