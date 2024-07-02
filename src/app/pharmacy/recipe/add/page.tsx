@@ -24,6 +24,7 @@ const getCurrentDate = () => {
 };
 
 const AddRecipePage: React.FC = () => {
+  const pharmacyServiceUrl = "http://127.0.0.1:8082/api";
   const router = useRouter();
 
   const [newRecipe, setNewRecipe] = useState<Recipe>({
@@ -54,7 +55,7 @@ const AddRecipePage: React.FC = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch("http://127.0.0.1:8082/api/order", {
+      const response = await fetch(`${pharmacyServiceUrl}/order`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,8 +67,11 @@ const AddRecipePage: React.FC = () => {
         throw new Error("Failed to save recipe");
       }
 
+      const data: any = await response.json();
+      console.log(data.data);
+
       // Redirect ke halaman lain setelah menyimpan resep
-      router.push("/pharmacy/recipe"); // Ganti dengan path yang sesuai setelah berhasil menyimpan
+      router.push(`/pharmacy/recipe/detail?id=${data.data.id}`); // Ganti dengan path yang sesuai setelah berhasil menyimpan
     } catch (error) {
       console.error("Failed to add recipe:", error);
       alert("Failed to add recipe. An error occurred.");

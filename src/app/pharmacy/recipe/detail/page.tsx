@@ -1,4 +1,5 @@
 "use client";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, FormEvent } from "react";
 import { Breadcrumb, Modal, Button, Table, Form } from "react-bootstrap";
 import Link from "next/link";
@@ -31,6 +32,10 @@ interface Props {
 }
 
 const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const id = searchParams.get("id");
+  console.log(id);
   const [recipeInfo, setRecipeInfo] = useState<Recipe | null>(null);
   const [recipeDetails, setRecipeDetails] = useState<RecipeDetail[]>([]);
   const [showModal, setShowModal] = useState(false);

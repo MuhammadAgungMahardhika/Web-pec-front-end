@@ -36,10 +36,10 @@ const RecipePage: React.FC = () => {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/api/recipes`);
+        const response = await fetch(`${pharmacyServiceUrl}/order`);
         if (response.ok) {
           const data = await response.json();
-          setRecipes(data);
+          setRecipes(data.data);
         } else {
           console.error("Failed to load recipes:", response.statusText);
         }
@@ -52,23 +52,17 @@ const RecipePage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleClose = () => setShowModal(false);
-  const handleShow = () => setShowModal(true);
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewRecipe({ ...newRecipe, [name]: value });
-  };
-
   const handleDeleteRecipe = async (recipeToDelete: Recipe) => {
     try {
-      const response = await fetch(`${pharmacyServiceUrl}/hapusresep`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(recipeToDelete),
-      });
+      const response = await fetch(
+        `${pharmacyServiceUrl}/order/${recipeToDelete.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        }
+      );
 
       if (response.ok) {
         console.log("Recipe deleted successfully:", recipeToDelete);
@@ -127,7 +121,7 @@ const RecipePage: React.FC = () => {
                   <td>{recipe.id_doctor}</td>
                   <td>
                     <Link
-                      href={`/pharmacy/recipe/detail/${recipe.id}`}
+                      href={`/pharmacy/recipe/detail?id=${recipe.id}`}
                       passHref>
                       Detail
                     </Link>
@@ -141,106 +135,6 @@ const RecipePage: React.FC = () => {
               ))}
             </tbody>
           </Table>
-
-          {/* Modal Tambah Resep */}
-          {/* <Modal show={showModal} onHide={handleClose}>
-            <Modal.Header closeButton>
-              <Modal.Title>Tambah Resep Baru</Modal.Title>
-            </Modal.Header>
-            <Modal.Body>
-              <Form>
-                <Form.Group controlId="formRecipeNoReceipt">
-                  <Form.Label>No Resep</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Masukkan no resep"
-                    name="no_of_receipt"
-                    value={newRecipe.no_of_receipt}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formRecipeIdUser">
-                  <Form.Label>ID User</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Masukkan ID user"
-                    name="id_patient"
-                    value={newRecipe.id_patient}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formRecipeDate">
-                  <Form.Label>Tanggal</Form.Label>
-                  <Form.Control
-                    type="date"
-                    placeholder="Masukkan tanggal"
-                    name="date"
-                    value={newRecipe.date}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formRecipeDateOfService">
-                  <Form.Label>Tanggal Pelayanan</Form.Label>
-                  <Form.Control
-                    type="date"
-                    placeholder="Masukkan tanggal pelayanan"
-                    name="date_of_service"
-                    value={newRecipe.date_of_service}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formRecipeCodeOfPoli">
-                  <Form.Label>Kode Poli</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Masukkan kode poli"
-                    name="id_poli"
-                    value={newRecipe.id_poli}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formRecipeMedicineType">
-                  <Form.Label>Medicine Type</Form.Label>
-                  <Form.Control
-                    as="select"
-                    name="kind_of_medicine"
-                    value={newRecipe.kind_of_medicine}
-                    onChange={handleInputChange}>
-                    <option value="">Select medicine type</option>
-                    {medicineTypes.map((medicine) => (
-                      <option key={medicine.id} value={medicine.name}>
-                        {medicine.name}
-                      </option>
-                    ))}
-                  </Form.Control>
-                </Form.Group>
-
-                <Form.Group controlId="formRecipeCodeOfDoctor">
-                  <Form.Label>Kode Dokter</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Masukkan kode dokter"
-                    name="id_doctor"
-                    value={newRecipe.id_doctor}
-                    onChange={handleInputChange}
-                  />
-                </Form.Group>
-              </Form>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onClick={handleClose}>
-                Batal
-              </Button>
-              <Button variant="primary" onClick={handleAddRecipe}>
-                Simpan
-              </Button>
-            </Modal.Footer>
-          </Modal> */}
         </div>
       </div>
     </div>
