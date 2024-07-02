@@ -36,14 +36,10 @@ const RecipePage: React.FC = () => {
   useEffect(() => {
     const loadRecipes = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/order`);
+        const response = await fetch(`${pharmacyServiceUrl}/api/recipes`);
         if (response.ok) {
           const data = await response.json();
-          if (data.status === "success") {
-            setRecipes(data.data); // Assuming data.data contains the array of recipes
-          } else {
-            console.error("Failed to load recipes:", data.message);
-          }
+          setRecipes(data);
         } else {
           console.error("Failed to load recipes:", response.statusText);
         }
@@ -66,15 +62,13 @@ const RecipePage: React.FC = () => {
 
   const handleDeleteRecipe = async (recipeToDelete: Recipe) => {
     try {
-      const response = await fetch(
-        `${pharmacyServiceUrl}/order/${recipeToDelete.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const response = await fetch(`${pharmacyServiceUrl}/hapusresep`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(recipeToDelete),
+      });
 
       if (response.ok) {
         console.log("Recipe deleted successfully:", recipeToDelete);
