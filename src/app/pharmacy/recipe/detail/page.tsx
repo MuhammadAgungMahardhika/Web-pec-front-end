@@ -64,8 +64,9 @@ const DetailRecipe: React.FC<Props> = () => {
       try {
         const response = await fetch(`${pharmacyServiceUrl}/order/${recipeId}`);
         if (response.ok) {
-          const data = await response.json();
-          setRecipeInfo(data.data);
+          const successResponse = await response.json();
+          const data = successResponse.data;
+          setRecipeInfo(data);
         } else {
           throw new Error("Failed to fetch recipe info");
         }
@@ -80,8 +81,9 @@ const DetailRecipe: React.FC<Props> = () => {
           `${pharmacyServiceUrl}/detail-order/order-id/${recipeId}`
         );
         if (response.ok) {
-          const data = await response.json();
-          setRecipeDetails(data.data);
+          const successResponse = await response.json();
+          const data = successResponse.data;
+          setRecipeDetails(data);
         } else {
           throw new Error("Failed to fetch recipe details");
         }
@@ -239,9 +241,17 @@ const DetailRecipe: React.FC<Props> = () => {
                   <Modal.Title>Tambah Detail Resep</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
+                  <Form.Group>
+                    <Form.Control
+                      type="hidden"
+                      name="id_order"
+                      value={recipeInfo?.id}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
                   <Form onSubmit={handleAddDetail}>
                     <Form.Group>
-                      <Form.Label>ID Produk:</Form.Label>
+                      <Form.Label>Obat</Form.Label>
                       <Form.Control
                         type="number"
                         name="id_product"
@@ -250,7 +260,7 @@ const DetailRecipe: React.FC<Props> = () => {
                       />
                     </Form.Group>
                     <Form.Group>
-                      <Form.Label>ID Signa:</Form.Label>
+                      <Form.Label>Signa</Form.Label>
                       <Form.Control
                         type="number"
                         name="id_signa"
@@ -258,63 +268,60 @@ const DetailRecipe: React.FC<Props> = () => {
                         onChange={handleChange}
                       />
                     </Form.Group>
+                    <Stack direction="horizontal" gap={2}>
+                      <Form.Group>
+                        <Form.Label>Jumlah:</Form.Label>
+                        <Form.Control
+                          type="number"
+                          name="quantity"
+                          value={newDetail.quantity}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                      <Form.Group>
+                        <Form.Label>Dosis:</Form.Label>
+                        <Form.Control
+                          type="number"
+                          name="dosis"
+                          value={newDetail.dosis ?? ""}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Stack>
+
                     <Form.Group>
-                      <Form.Label>ID Order:</Form.Label>
                       <Form.Control
-                        type="number"
-                        name="id_order"
-                        value={newDetail.id_order}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                    <Form.Group>
-                      <Form.Label>Jumlah:</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="quantity"
-                        value={newDetail.quantity}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                    <Form.Group>
-                      <Form.Label>Harga:</Form.Label>
-                      <Form.Control
-                        type="number"
+                        type="hidden"
                         name="price"
                         value={newDetail.price}
                         onChange={handleChange}
                       />
                     </Form.Group>
-                    <Form.Group>
-                      <Form.Label>Dosis:</Form.Label>
-                      <Form.Control
-                        type="number"
-                        name="dosis"
-                        value={newDetail.dosis ?? ""}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                    <Form.Group>
-                      <Form.Label>Catatan:</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="note"
-                        value={newDetail.note}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                    <Form.Group>
-                      <Form.Label>Catatan 2:</Form.Label>
-                      <Form.Control
-                        type="text"
-                        name="note2"
-                        value={newDetail.note2}
-                        onChange={handleChange}
-                      />
-                    </Form.Group>
-                    <Button variant="primary" type="submit">
-                      Simpan
-                    </Button>
+                    <Stack direction="horizontal" gap={2}>
+                      <Form.Group>
+                        <Form.Label>Catatan:</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="note"
+                          value={newDetail.note}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                      <Form.Group>
+                        <Form.Label>Catatan 2:</Form.Label>
+                        <Form.Control
+                          type="text"
+                          name="note2"
+                          value={newDetail.note2}
+                          onChange={handleChange}
+                        />
+                      </Form.Group>
+                    </Stack>
+                    <div className="text-end">
+                      <Button variant="primary" type="submit" className="mt-2 ">
+                        Simpan
+                      </Button>
+                    </div>
                   </Form>
                 </Modal.Body>
               </Modal>
