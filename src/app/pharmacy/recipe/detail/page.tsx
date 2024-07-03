@@ -1,7 +1,16 @@
 "use client";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { useState, useEffect, FormEvent } from "react";
-import { Breadcrumb, Modal, Button, Table, Form } from "react-bootstrap";
+import {
+  Breadcrumb,
+  Modal,
+  Button,
+  Table,
+  Form,
+  Stack,
+  Container,
+} from "react-bootstrap";
+
 import Link from "next/link";
 
 interface Recipe {
@@ -31,11 +40,10 @@ interface Props {
   recipeId: string;
 }
 
-const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
-  const router = useRouter();
+const DetailRecipe: React.FC<Props> = () => {
+  const pharmacyServiceUrl = "http://127.0.0.1:8082/api";
   const searchParams = useSearchParams();
-  const id = searchParams.get("id");
-  console.log(id);
+  const recipeId = searchParams.get("id");
   const [recipeInfo, setRecipeInfo] = useState<Recipe | null>(null);
   const [recipeDetails, setRecipeDetails] = useState<RecipeDetail[]>([]);
   const [showModal, setShowModal] = useState(false);
@@ -54,12 +62,10 @@ const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
   useEffect(() => {
     const fetchRecipeInfo = async () => {
       try {
-        const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/recipes/${recipeId}`
-        );
+        const response = await fetch(`${pharmacyServiceUrl}/order/${recipeId}`);
         if (response.ok) {
           const data = await response.json();
-          setRecipeInfo(data.recipe);
+          setRecipeInfo(data.data);
         } else {
           throw new Error("Failed to fetch recipe info");
         }
@@ -71,11 +77,11 @@ const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
     const fetchRecipeDetails = async () => {
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/recipe-details?recipeId=${recipeId}`
+          `${pharmacyServiceUrl}/detail-order/order-id/${recipeId}`
         );
         if (response.ok) {
           const data = await response.json();
-          setRecipeDetails(data.recipeDetails);
+          setRecipeDetails(data.data);
         } else {
           throw new Error("Failed to fetch recipe details");
         }
@@ -96,16 +102,13 @@ const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
   const handleAddDetail = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/recipe-details`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ recipeId, ...newDetail }),
-        }
-      );
+      const response = await fetch(`${pharmacyServiceUrl}/detail-order`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ recipeId, ...newDetail }),
+      });
       if (response.ok) {
         const data = await response.json();
         setRecipeDetails([...recipeDetails, data.newDetail]);
@@ -132,7 +135,7 @@ const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
   const handleDeleteDetail = async (detailId: number) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL}/recipe-details/${detailId}`,
+        `${pharmacyServiceUrl}/recipe-details/${detailId}`,
         {
           method: "DELETE",
         }
@@ -170,47 +173,36 @@ const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
         <div className="card-body">
           <div>
             {recipeInfo && (
-              <div>
-                <h2>Informasi Resep</h2>
-                <p>
-                  <strong>ID Resep:</strong> {recipeInfo.id}
-                </p>
-                <p>
+              <Container className="border mb-4">
+                <Stack direction="horizontal" gap={3} className="p-2">
                   <strong>No. Resep:</strong> {recipeInfo.no_of_receipt}
-                </p>
-                <p>
                   <strong>ID Pasien:</strong> {recipeInfo.id_patient}
-                </p>
-                <p>
                   <strong>ID Poli:</strong> {recipeInfo.id_poli}
-                </p>
-                <p>
+                </Stack>
+                <Stack direction="horizontal" gap={3} className="p-2">
                   <strong>ID Dokter:</strong> {recipeInfo.id_doctor}
-                </p>
-                <p>
                   <strong>Tanggal:</strong> {recipeInfo.date}
-                </p>
-                <p>
                   <strong>Tanggal Pelayanan:</strong>{" "}
                   {recipeInfo.date_of_service}
-                </p>
-                <p>
+                </Stack>
+                <Stack direction="horizontal" gap={3} className="p-2">
                   <strong>Jenis Obat:</strong> {recipeInfo.kind_of_medicine}
-                </p>
-              </div>
+                </Stack>
+              </Container>
             )}
 
             <div>
-              <Button variant="primary" onClick={handleShowModal}>
+              <Button
+                variant="primary"
+                onClick={handleShowModal}
+                className=" mb-3">
                 Tambah Detail Resep
               </Button>
               <Table striped bordered hover>
                 <thead>
                   <tr>
-                    <th>ID</th>
-                    <th>ID Produk</th>
-                    <th>ID Signa</th>
-                    <th>ID Order</th>
+                    <th>Nama Obat</th>
+                    <th>Signa</th>
                     <th>Jumlah</th>
                     <th>Harga</th>
                     <th>Dosis</th>
@@ -222,10 +214,8 @@ const DetailRecipe: React.FC<Props> = ({ recipeId }) => {
                 <tbody>
                   {recipeDetails.map((detail) => (
                     <tr key={detail.id}>
-                      <td>{detail.id}</td>
                       <td>{detail.id_product}</td>
                       <td>{detail.id_signa}</td>
-                      <td>{detail.id_order}</td>
                       <td>{detail.quantity}</td>
                       <td>{detail.price}</td>
                       <td>{detail.dosis ?? "-"}</td>

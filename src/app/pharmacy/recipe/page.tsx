@@ -18,20 +18,7 @@ interface Recipe {
 const RecipePage: React.FC = () => {
   const pharmacyServiceUrl = "http://localhost:8082/api";
   // const pharmacyServiceUrl = process.env.PHARMACYSERVICE_URL;
-  console.log(pharmacyServiceUrl);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
-  const [showModal, setShowModal] = useState(false);
-
-  const [newRecipe, setNewRecipe] = useState<Recipe>({
-    id: 0,
-    no_of_receipt: "",
-    id_patient: "",
-    date: "",
-    date_of_service: "",
-    id_poli: "",
-    kind_of_medicine: "",
-    id_doctor: "",
-  });
 
   useEffect(() => {
     const loadRecipes = async () => {
@@ -122,7 +109,8 @@ const RecipePage: React.FC = () => {
                   <td>
                     <Link
                       href={`/pharmacy/recipe/detail?id=${recipe.id}`}
-                      passHref>
+                      passHref
+                      className="btn btn-primary me-2">
                       Detail
                     </Link>
                     <Button
