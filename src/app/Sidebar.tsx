@@ -41,20 +41,16 @@ const menues: menu[] = [
         icon: "bi bi-stack",
         submenu: [
           {
-            name: "produk",
-            link: "/master/product",
-          },
-          {
-            name: "Satuan produk",
-            link: "/master/product-unit",
+            name: "Produk",
+            link: "/pharmacy/product",
           },
           {
             name: "Kategori produk",
-            link: "/master/product-category",
+            link: "/pharmacy/product-category",
           },
           {
-            name: "signa",
-            link: "/master/product-signa",
+            name: "Signa",
+            link: "/pharmacy/product-signa",
           },
         ],
       },
