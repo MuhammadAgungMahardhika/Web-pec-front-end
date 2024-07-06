@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Button, Table, Modal, Form } from "react-bootstrap";
-import Link from "next/link";
+import React, { useState, useEffect, ChangeEvent } from "react";
+import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 interface Product {
   id: number;
@@ -21,15 +22,26 @@ interface Product {
 const ProductPage: React.FC = () => {
   const pharmacyServiceUrl = "http://localhost:8082/api";
   const [products, setProducts] = useState<Product[]>([]);
+  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [pagination, setPagination] = useState<{
+    pageIndex: number;
+    pageSize: number;
+  }>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
+
+  console.log(pagination.pageIndex);
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/product`);
+        const response = await fetch(
+          `${pharmacyServiceUrl}/product?page=${pagination.pageIndex}&per_page=${pagination.pageSize}`
+        );
         if (response.ok) {
           const data = await response.json();
           setProducts(data.data);
@@ -40,9 +52,8 @@ const ProductPage: React.FC = () => {
         console.error("Failed to load products:", error);
       }
     };
-
     loadProducts();
-  }, []);
+  }, [pagination]);
 
   const handleSaveProduct = async () => {
     if (!currentProduct) return;
@@ -69,7 +80,7 @@ const ProductPage: React.FC = () => {
             )
           );
         } else {
-          setProducts((prev) => [...prev, updatedProduct]);
+          setProducts((prev) => [updatedProduct.data, ...prev]);
         }
         setShowModal(false);
         setCurrentProduct(null);
@@ -151,12 +162,20 @@ const ProductPage: React.FC = () => {
     setCurrentProduct(null);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === "checkbox" ? checked : value;
     if (currentProduct) {
       setCurrentProduct({ ...currentProduct, [name]: newValue });
     }
+  };
+
+  const handlePageChange = (pageIndex: number) => {
+    setPagination((prev) => ({ ...prev, pageIndex }));
+  };
+
+  const handlePageSizeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
 
   return (
@@ -169,11 +188,12 @@ const ProductPage: React.FC = () => {
           <Button
             variant="primary"
             className="mb-3"
-            onClick={() => handleOpenModal()}>
-            Tambah Produk
+            onClick={() => handleOpenModal()}
+            title="Tambah produk ">
+            <FontAwesomeIcon icon={faPlus} /> {"Tambah"}
           </Button>
 
-          <Table striped bordered hover>
+          <Table striped bordered hover responsive>
             <thead>
               <tr>
                 <th>#</th>
@@ -187,7 +207,7 @@ const ProductPage: React.FC = () => {
                 <th>BPJS PRB</th>
                 <th>Kronis</th>
                 <th>Generik</th>
-                <th>Aksi</th>
+                <th className="text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -205,22 +225,62 @@ const ProductPage: React.FC = () => {
                   <td>{product.chronic ? "Ya" : "Tidak"}</td>
                   <td>{product.generic}</td>
                   <td>
-                    <Button
-                      variant="primary"
-                      className="me-2"
-                      onClick={() => handleOpenModal(product)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleOpenDeleteModal(product)}>
-                      Hapus
-                    </Button>
+                    <Stack direction="horizontal" gap={2}>
+                      <Button
+                        variant="primary"
+                        className="me-2 btn-sm"
+                        title="ubah informasi produk"
+                        onClick={() => handleOpenModal(product)}>
+                        <FontAwesomeIcon icon={faEdit} size="xs" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        className="btn-sm"
+                        onClick={() => handleOpenDeleteModal(product)}>
+                        <FontAwesomeIcon icon={faTrash} size="xs" />
+                      </Button>
+                    </Stack>
                   </td>
                 </tr>
               ))}
             </tbody>
           </Table>
+
+          {/* Pagination Controls */}
+          <div className="pagination-controls">
+            <Button
+              disabled={pagination.pageIndex === 0}
+              onClick={() => handlePageChange(0)}>
+              {"<<"}
+            </Button>
+            <Button
+              disabled={pagination.pageIndex === 0}
+              onClick={() => handlePageChange(pagination.pageIndex - 1)}>
+              {"<"}
+            </Button>
+            <Button
+              disabled={products.length < pagination.pageSize}
+              onClick={() => handlePageChange(pagination.pageIndex + 1)}>
+              {">"}
+            </Button>
+            <Button
+              disabled={products.length < pagination.pageSize}
+              onClick={() =>
+                handlePageChange(
+                  Math.ceil(products.length / pagination.pageSize) - 1
+                )
+              }>
+              {">>"}
+            </Button>
+
+            <select value={pagination.pageSize} onChange={handlePageSizeChange}>
+              {[10, 20, 30, 40, 50].map((size) => (
+                <option key={size} value={size}>
+                  Show {size}
+                </option>
+              ))}
+            </select>
+          </div>
 
           {/* Modal for Add/Edit Product */}
           <Modal show={showModal} onHide={handleCloseModal}>
@@ -231,25 +291,49 @@ const ProductPage: React.FC = () => {
             </Modal.Header>
             <Modal.Body>
               <Form>
-                <Form.Group controlId="formCode">
-                  <Form.Label>Kode</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="code"
-                    value={currentProduct?.code || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                <Stack direction="horizontal" gap={2}>
+                  <Form.Group controlId="formCode">
+                    <Form.Label>Kode</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="code"
+                      value={currentProduct?.code || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
 
-                <Form.Group controlId="formName">
-                  <Form.Label>Nama</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="name"
-                    value={currentProduct?.name || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                  <Form.Group controlId="formName">
+                    <Form.Label>Nama</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="name"
+                      value={currentProduct?.name || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Stack>
+
+                <Stack direction="horizontal" gap={2}>
+                  <Form.Group controlId="formPrice">
+                    <Form.Label>Harga</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="price"
+                      value={currentProduct?.price || 0}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+
+                  <Form.Group controlId="formStockQuantity">
+                    <Form.Label>Jumlah Stok</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="stock_quantity"
+                      value={currentProduct?.stock_quantity || 0}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Stack>
 
                 <Form.Group controlId="formDescription">
                   <Form.Label>Deskripsi</Form.Label>
@@ -257,26 +341,6 @@ const ProductPage: React.FC = () => {
                     type="text"
                     name="description"
                     value={currentProduct?.description || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formPrice">
-                  <Form.Label>Harga</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="price"
-                    value={currentProduct?.price || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formStockQuantity">
-                  <Form.Label>Jumlah Stok</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="stock_quantity"
-                    value={currentProduct?.stock_quantity || ""}
                     onChange={handleChange}
                   />
                 </Form.Group>
@@ -291,55 +355,48 @@ const ProductPage: React.FC = () => {
                   />
                 </Form.Group>
 
-                <Form.Group controlId="formRestriction">
-                  <Form.Label>Pembatasan</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="restriction"
-                    value={currentProduct?.restriction || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                <Stack direction="horizontal" gap={2}>
+                  <Form.Group controlId="formRestriction">
+                    <Form.Label>Pembatasan</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="restriction"
+                      value={currentProduct?.restriction || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="formGeneric">
+                    <Form.Label>Generik</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="generic"
+                      value={currentProduct?.generic || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Stack>
 
-                <Form.Group controlId="formBpjsPrb">
-                  <Form.Label>BPJS PRB</Form.Label>
-                  <Form.Check
-                    type="checkbox"
-                    name="bpjs_prb"
-                    checked={currentProduct?.bpjs_prb || false}
-                    onChange={(e) =>
-                      setCurrentProduct({
-                        ...currentProduct!,
-                        bpjs_prb: e.target.checked,
-                      })
-                    }
-                  />
-                </Form.Group>
+                <Stack direction="horizontal" gap={2}>
+                  <Form.Group controlId="formBpjsPrb">
+                    <Form.Check
+                      type="checkbox"
+                      label="BPJS PRB"
+                      name="bpjs_prb"
+                      checked={currentProduct?.bpjs_prb || false}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
 
-                <Form.Group controlId="formChronic">
-                  <Form.Label>Kronis</Form.Label>
-                  <Form.Check
-                    type="checkbox"
-                    name="chronic"
-                    checked={currentProduct?.chronic || false}
-                    onChange={(e) =>
-                      setCurrentProduct({
-                        ...currentProduct!,
-                        chronic: e.target.checked,
-                      })
-                    }
-                  />
-                </Form.Group>
-
-                <Form.Group controlId="formGeneric">
-                  <Form.Label>Generik</Form.Label>
-                  <Form.Control
-                    type="text"
-                    name="generic"
-                    value={currentProduct?.generic || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
+                  <Form.Group controlId="formChronic">
+                    <Form.Check
+                      type="checkbox"
+                      label="Kronis"
+                      name="chronic"
+                      checked={currentProduct?.chronic || false}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Stack>
               </Form>
             </Modal.Body>
             <Modal.Footer>
@@ -358,7 +415,7 @@ const ProductPage: React.FC = () => {
               <Modal.Title>Konfirmasi Hapus</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              Apakah Anda yakin ingin menghapus produk {currentProduct?.name}?
+              <p>Apakah Anda yakin ingin menghapus produk ini?</p>
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleCloseDeleteModal}>
