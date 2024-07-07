@@ -32,11 +32,6 @@ export default function RootLayout({
     <html lang="en" data-bs-theme="light">
       <head>
         <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
-        <link
-          rel="preload"
-          href="/_next/static/css/app/layout.css?v=1718770909792"
-          as="style"
-        />
       </head>
       <body className="light dark">
         <div id="app">

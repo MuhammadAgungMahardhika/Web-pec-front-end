@@ -134,13 +134,15 @@ const Sidebar = () => {
     <div className="sidebar-wrapper active">
       <div className="sidebar-header position-relative">
         <div className="d-flex justify-content-between align-items-center">
-          <div className="logo">
-            <a href="index.html">
+          <div
+            className="logo"
+            style={{ position: "relative", width: "100px", height: "100px" }}>
+            <a href="/">
               <Image
-                src="/assets/images/logo/logo.svg"
+                src="/assets/images/logo/logo_pec.svg"
                 alt="logo"
-                width={100}
-                height={100}
+                fill
+                priority
               />
             </a>
           </div>

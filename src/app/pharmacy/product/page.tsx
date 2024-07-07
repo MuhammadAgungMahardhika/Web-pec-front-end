@@ -34,8 +34,6 @@ const ProductPage: React.FC = () => {
     pageSize: 10,
   });
 
-  console.log(pagination.pageIndex);
-
   useEffect(() => {
     const loadProducts = async () => {
       try {

@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { Button, Table, Modal, Form } from "react-bootstrap";
-import Link from "next/link";
+import React, { useState, useEffect, ChangeEvent } from "react";
+import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 interface ProductCategory {
   id: number;
@@ -10,36 +11,49 @@ interface ProductCategory {
 
 const ProductCategoryPage: React.FC = () => {
   const pharmacyServiceUrl = "http://localhost:8082/api";
-  const [categories, setCategories] = useState<ProductCategory[]>([]);
+  const [productCategories, setProductCategories] = useState<ProductCategory[]>(
+    []
+  );
+  const [currentProductCategory, setCurrentProductCategory] =
+    useState<ProductCategory | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [currentCategory, setCurrentCategory] =
-    useState<ProductCategory | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [pagination, setPagination] = useState<{
+    pageIndex: number;
+    pageSize: number;
+  }>({
+    pageIndex: 0,
+    pageSize: 10,
+  });
 
   useEffect(() => {
-    const loadCategories = async () => {
+    const loadProductCategories = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/product-category`);
+        const response = await fetch(
+          `${pharmacyServiceUrl}/product-category?page=${pagination.pageIndex}&per_page=${pagination.pageSize}`
+        );
         if (response.ok) {
           const data = await response.json();
-          setCategories(data.data);
+          setProductCategories(data.data);
         } else {
-          console.error("Failed to load categories:", response.statusText);
+          console.error(
+            "Failed to load product categories:",
+            response.statusText
+          );
         }
       } catch (error) {
-        console.error("Failed to load categories:", error);
+        console.error("Failed to load product categories:", error);
       }
     };
+    loadProductCategories();
+  }, [pagination]);
 
-    loadCategories();
-  }, []);
-
-  const handleSaveCategory = async () => {
-    if (!currentCategory) return;
+  const handleSaveProductCategory = async () => {
+    if (!currentProductCategory) return;
     const method = isEditMode ? "PUT" : "POST";
     const url = isEditMode
-      ? `${pharmacyServiceUrl}/product-category/${currentCategory.id}`
+      ? `${pharmacyServiceUrl}/product-category/${currentProductCategory.id}`
       : `${pharmacyServiceUrl}/product-category`;
 
     try {
@@ -48,39 +62,42 @@ const ProductCategoryPage: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(currentCategory),
+        body: JSON.stringify(currentProductCategory),
       });
 
       if (response.ok) {
-        const updatedCategory = await response.json();
+        const updatedProductCategory = await response.json();
         if (isEditMode) {
-          setCategories((prev) =>
+          setProductCategories((prev) =>
             prev.map((category) =>
-              category.id === currentCategory.id
-                ? updatedCategory.data
+              category.id === currentProductCategory.id
+                ? updatedProductCategory.data
                 : category
             )
           );
         } else {
-          setCategories((prev) => [...prev, updatedCategory.data]);
+          setProductCategories((prev) => [
+            updatedProductCategory.data,
+            ...prev,
+          ]);
         }
         setShowModal(false);
-        setCurrentCategory(null);
+        setCurrentProductCategory(null);
       } else {
-        console.error("Failed to save category:", response.statusText);
-        alert("Failed to save category. Please try again.");
+        console.error("Failed to save product category:", response.statusText);
+        alert("Failed to save product category. Please try again.");
       }
     } catch (error) {
-      console.error("Failed to save category:", error);
-      alert("Failed to save category. An error occurred.");
+      console.error("Failed to save product category:", error);
+      alert("Failed to save product category. An error occurred.");
     }
   };
 
-  const handleDeleteCategory = async () => {
-    if (!currentCategory) return;
+  const handleDeleteProductCategory = async () => {
+    if (!currentProductCategory) return;
     try {
       const response = await fetch(
-        `${pharmacyServiceUrl}/product-category/${currentCategory.id}`,
+        `${pharmacyServiceUrl}/product-category/${currentProductCategory.id}`,
         {
           method: "DELETE",
           headers: {
@@ -90,27 +107,30 @@ const ProductCategoryPage: React.FC = () => {
       );
 
       if (response.ok) {
-        setCategories((prev) =>
-          prev.filter((category) => category.id !== currentCategory.id)
+        setProductCategories((prev) =>
+          prev.filter((category) => category.id !== currentProductCategory.id)
         );
         setShowDeleteModal(false);
-        setCurrentCategory(null);
+        setCurrentProductCategory(null);
       } else {
-        console.error("Failed to delete category:", response.statusText);
-        alert("Failed to delete category. Please try again.");
+        console.error(
+          "Failed to delete product category:",
+          response.statusText
+        );
+        alert("Failed to delete product category. Please try again.");
       }
     } catch (error) {
-      console.error("Failed to delete category:", error);
-      alert("Failed to delete category. An error occurred.");
+      console.error("Failed to delete product category:", error);
+      alert("Failed to delete product category. An error occurred.");
     }
   };
 
   const handleOpenModal = (category?: ProductCategory) => {
     if (category) {
-      setCurrentCategory(category);
+      setCurrentProductCategory(category);
       setIsEditMode(true);
     } else {
-      setCurrentCategory({
+      setCurrentProductCategory({
         id: 0,
         name: "",
       });
@@ -120,25 +140,33 @@ const ProductCategoryPage: React.FC = () => {
   };
 
   const handleOpenDeleteModal = (category: ProductCategory) => {
-    setCurrentCategory(category);
+    setCurrentProductCategory(category);
     setShowDeleteModal(true);
   };
 
   const handleCloseModal = () => {
     setShowModal(false);
-    setCurrentCategory(null);
+    setCurrentProductCategory(null);
   };
 
   const handleCloseDeleteModal = () => {
     setShowDeleteModal(false);
-    setCurrentCategory(null);
+    setCurrentProductCategory(null);
   };
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    if (currentCategory) {
-      setCurrentCategory({ ...currentCategory, [name]: value });
+    if (currentProductCategory) {
+      setCurrentProductCategory({ ...currentProductCategory, [name]: value });
     }
+  };
+
+  const handlePageChange = (pageIndex: number) => {
+    setPagination((prev) => ({ ...prev, pageIndex }));
+  };
+
+  const handlePageSizeChange = (e: ChangeEvent<HTMLSelectElement>) => {
+    setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
 
   return (
@@ -151,56 +179,97 @@ const ProductCategoryPage: React.FC = () => {
           <Button
             variant="primary"
             className="mb-3"
-            onClick={() => handleOpenModal()}>
-            Tambah Kategori
+            onClick={() => handleOpenModal()}
+            title="Tambah kategori produk">
+            <FontAwesomeIcon icon={faPlus} /> {"Tambah"}
           </Button>
 
-          <Table striped bordered hover>
+          <Table striped bordered hover responsive>
             <thead>
               <tr>
                 <th>#</th>
                 <th>Nama</th>
-                <th>Aksi</th>
+                <th className="text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {categories.map((category, index) => (
+              {productCategories.map((category, index) => (
                 <tr key={category.id}>
                   <td>{index + 1}</td>
                   <td>{category.name}</td>
                   <td>
-                    <Button
-                      variant="primary"
-                      className="me-2"
-                      onClick={() => handleOpenModal(category)}>
-                      Edit
-                    </Button>
-                    <Button
-                      variant="danger"
-                      onClick={() => handleOpenDeleteModal(category)}>
-                      Hapus
-                    </Button>
+                    <Stack direction="horizontal" gap={2}>
+                      <Button
+                        variant="primary"
+                        className="me-2 btn-sm"
+                        title="ubah informasi kategori produk"
+                        onClick={() => handleOpenModal(category)}>
+                        <FontAwesomeIcon icon={faEdit} size="xs" />
+                      </Button>
+                      <Button
+                        variant="danger"
+                        className="btn-sm"
+                        onClick={() => handleOpenDeleteModal(category)}>
+                        <FontAwesomeIcon icon={faTrash} size="xs" />
+                      </Button>
+                    </Stack>
                   </td>
                 </tr>
               ))}
             </tbody>
           </Table>
 
-          {/* Modal for Add/Edit Category */}
+          {/* Pagination Controls */}
+          <div className="pagination-controls">
+            <Button
+              disabled={pagination.pageIndex === 0}
+              onClick={() => handlePageChange(0)}>
+              {"<<"}
+            </Button>
+            <Button
+              disabled={pagination.pageIndex === 0}
+              onClick={() => handlePageChange(pagination.pageIndex - 1)}>
+              {"<"}
+            </Button>
+            <Button
+              disabled={productCategories.length < pagination.pageSize}
+              onClick={() => handlePageChange(pagination.pageIndex + 1)}>
+              {">"}
+            </Button>
+            <Button
+              disabled={productCategories.length < pagination.pageSize}
+              onClick={() =>
+                handlePageChange(
+                  Math.ceil(productCategories.length / pagination.pageSize) - 1
+                )
+              }>
+              {">>"}
+            </Button>
+
+            <select value={pagination.pageSize} onChange={handlePageSizeChange}>
+              {[10, 20, 30, 40, 50].map((size) => (
+                <option key={size} value={size}>
+                  Show {size}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Modal for Add/Edit Product Category */}
           <Modal show={showModal} onHide={handleCloseModal}>
             <Modal.Header closeButton>
               <Modal.Title>
-                {isEditMode ? "Edit Kategori" : "Tambah Kategori"}
+                {isEditMode ? "Edit Kategori Produk" : "Tambah Kategori Produk"}
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
               <Form>
                 <Form.Group controlId="formName">
-                  <Form.Label>Nama Kategori</Form.Label>
+                  <Form.Label>Nama</Form.Label>
                   <Form.Control
                     type="text"
                     name="name"
-                    value={currentCategory?.name || ""}
+                    value={currentProductCategory?.name || ""}
                     onChange={handleChange}
                   />
                 </Form.Group>
@@ -210,7 +279,7 @@ const ProductCategoryPage: React.FC = () => {
               <Button variant="secondary" onClick={handleCloseModal}>
                 Batal
               </Button>
-              <Button variant="primary" onClick={handleSaveCategory}>
+              <Button variant="primary" onClick={handleSaveProductCategory}>
                 Simpan
               </Button>
             </Modal.Footer>
@@ -222,14 +291,14 @@ const ProductCategoryPage: React.FC = () => {
               <Modal.Title>Konfirmasi Hapus</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              Apakah Anda yakin ingin menghapus kategori {currentCategory?.name}
-              ?
+              Apakah Anda yakin ingin menghapus kategori produk
+              {`${currentProductCategory?.name}`}?
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleCloseDeleteModal}>
                 Batal
               </Button>
-              <Button variant="danger" onClick={handleDeleteCategory}>
+              <Button variant="danger" onClick={handleDeleteProductCategory}>
                 Hapus
               </Button>
             </Modal.Footer>
