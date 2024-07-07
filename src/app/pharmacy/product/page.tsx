@@ -3,7 +3,7 @@ import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
-
+import LoadingSpinner from "@/app/components/spinner/spinner";
 interface Product {
   id: number;
   id_category: number;
@@ -21,6 +21,7 @@ interface Product {
 
 const ProductPage: React.FC = () => {
   const pharmacyServiceUrl = "http://localhost:8082/api";
+  const [loading, setLoading] = useState<boolean>(true);
   const [products, setProducts] = useState<Product[]>([]);
   const [currentProduct, setCurrentProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -43,6 +44,7 @@ const ProductPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setProducts(data.data);
+          setLoading(false);
         } else {
           console.error("Failed to load products:", response.statusText);
         }
@@ -176,6 +178,9 @@ const ProductPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   return (
     <div className="container mt-4">
       <div className="card">
