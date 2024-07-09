@@ -2,7 +2,14 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCaretLeft,
+  faCaretRight,
+  faDiagramNext,
+  faEdit,
+  faPlus,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "@/app/components/spinner/spinner";
 interface Product {
   id: number;
@@ -31,7 +38,7 @@ const ProductPage: React.FC = () => {
     pageIndex: number;
     pageSize: number;
   }>({
-    pageIndex: 0,
+    pageIndex: 1,
     pageSize: 10,
   });
 
@@ -44,6 +51,7 @@ const ProductPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setProducts(data.data);
+          console.log(data.count);
           setLoading(false);
         } else {
           console.error("Failed to load products:", response.statusText);
@@ -216,12 +224,16 @@ const ProductPage: React.FC = () => {
             <tbody>
               {products.map((product, index) => (
                 <tr key={product.id}>
-                  <td>{index + 1}</td>
+                  <td>
+                    {(pagination.pageIndex - 1) * pagination.pageSize +
+                      index +
+                      1}
+                  </td>
                   <td>{product.code}</td>
                   <td>{product.name}</td>
                   <td>{product.description}</td>
-                  <td>{product.price}</td>
-                  <td>{product.stock_quantity}</td>
+                  <td className="text-end">{product.price}</td>
+                  <td className="text-end">{product.stock_quantity}</td>
                   <td>{product.expired}</td>
                   <td>{product.restriction}</td>
                   <td>{product.bpjs_prb ? "Ya" : "Tidak"}</td>
@@ -252,37 +264,35 @@ const ProductPage: React.FC = () => {
           {/* Pagination Controls */}
           <div className="pagination-controls">
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(0)}>
-              {"<<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(1)}
+              className="me-2">
+              {"Terbaru"}
             </Button>
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(pagination.pageIndex - 1)}>
-              {"<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(pagination.pageIndex - 1)}
+              className="me-2">
+              <FontAwesomeIcon icon={faCaretLeft}></FontAwesomeIcon>
+              {"Sebelumnya"}
             </Button>
             <Button
               disabled={products.length < pagination.pageSize}
-              onClick={() => handlePageChange(pagination.pageIndex + 1)}>
-              {">"}
-            </Button>
-            <Button
-              disabled={products.length < pagination.pageSize}
-              onClick={() =>
-                handlePageChange(
-                  Math.ceil(products.length / pagination.pageSize) - 1
-                )
-              }>
-              {">>"}
+              onClick={() => handlePageChange(pagination.pageIndex + 1)}
+              className="me-2">
+              {"Selanjutnya"}
+              <FontAwesomeIcon icon={faCaretRight}></FontAwesomeIcon>
             </Button>
 
-            <select value={pagination.pageSize} onChange={handlePageSizeChange}>
-              {[10, 20, 30, 40, 50].map((size) => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
+            <Form.Select
+              value={pagination.pageSize}
+              onChange={handlePageSizeChange}
+              className="ms-2"
+              style={{ width: "auto", display: "inline-block" }}>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </Form.Select>
           </div>
 
           {/* Modal for Add/Edit Product */}
@@ -296,7 +306,9 @@ const ProductPage: React.FC = () => {
               <Form>
                 <Stack direction="horizontal" gap={2}>
                   <Form.Group controlId="formCode">
-                    <Form.Label>Kode</Form.Label>
+                    <Form.Label>
+                      Kode <span className="text-danger"> * </span>
+                    </Form.Label>
                     <Form.Control
                       type="text"
                       name="code"
@@ -306,7 +318,10 @@ const ProductPage: React.FC = () => {
                   </Form.Group>
 
                   <Form.Group controlId="formName">
-                    <Form.Label>Nama</Form.Label>
+                    <Form.Label>
+                      Nama
+                      <span className="text-danger"> * </span>
+                    </Form.Label>
                     <Form.Control
                       type="text"
                       name="name"
@@ -318,7 +333,10 @@ const ProductPage: React.FC = () => {
 
                 <Stack direction="horizontal" gap={2}>
                   <Form.Group controlId="formPrice">
-                    <Form.Label>Harga</Form.Label>
+                    <Form.Label>
+                      Harga
+                      <span className="text-danger"> * </span>
+                    </Form.Label>
                     <Form.Control
                       type="number"
                       name="price"
