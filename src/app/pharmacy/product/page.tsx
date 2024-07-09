@@ -2,15 +2,22 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+
 import {
   faCaretLeft,
   faCaretRight,
-  faDiagramNext,
   faEdit,
   faPlus,
+  faSave,
   faTrash,
+  faX,
 } from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "@/app/components/spinner/spinner";
+import {
+  SuccessAlert,
+  FailedAlert,
+  WarningAlert,
+} from "@/app/components/alert/alert";
 interface Product {
   id: number;
   id_category: number;
@@ -42,16 +49,17 @@ const ProductPage: React.FC = () => {
     pageSize: 10,
   });
 
+  const [searchQuery, setSearchQuery] = useState<string>("");
+
   useEffect(() => {
     const loadProducts = async () => {
       try {
         const response = await fetch(
-          `${pharmacyServiceUrl}/product?page=${pagination.pageIndex}&per_page=${pagination.pageSize}`
+          `${pharmacyServiceUrl}/product?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
         if (response.ok) {
           const data = await response.json();
           setProducts(data.data);
-          console.log(data.count);
           setLoading(false);
         } else {
           console.error("Failed to load products:", response.statusText);
@@ -61,7 +69,7 @@ const ProductPage: React.FC = () => {
       }
     };
     loadProducts();
-  }, [pagination]);
+  }, [pagination, searchQuery]);
 
   const handleSaveProduct = async () => {
     if (!currentProduct) return;
@@ -80,6 +88,7 @@ const ProductPage: React.FC = () => {
       });
 
       if (response.ok) {
+        SuccessAlert("Berhasil menambahkan produk");
         const updatedProduct = await response.json();
         if (isEditMode) {
           setProducts((prev) =>
@@ -94,11 +103,11 @@ const ProductPage: React.FC = () => {
         setCurrentProduct(null);
       } else {
         console.error("Failed to save product:", response.statusText);
-        alert("Failed to save product. Please try again.");
+        FailedAlert("Failed to save product. Please try again.");
       }
     } catch (error) {
       console.error("Failed to save product:", error);
-      alert("Failed to save product. An error occurred.");
+      FailedAlert("Failed to save product. An error occurred.");
     }
   };
 
@@ -116,6 +125,7 @@ const ProductPage: React.FC = () => {
       );
 
       if (response.ok) {
+        SuccessAlert("Berhasil menghapus produk");
         setProducts((prev) =>
           prev.filter((product) => product.id !== currentProduct.id)
         );
@@ -123,11 +133,11 @@ const ProductPage: React.FC = () => {
         setCurrentProduct(null);
       } else {
         console.error("Failed to delete product:", response.statusText);
-        alert("Failed to delete product. Please try again.");
+        FailedAlert("Failed to delete product. Please try again.");
       }
     } catch (error) {
       console.error("Failed to delete product:", error);
-      alert("Failed to delete product. An error occurred.");
+      FailedAlert("Failed to delete product. An error occurred.");
     }
   };
 
@@ -185,6 +195,10 @@ const ProductPage: React.FC = () => {
   const handlePageSizeChange = (e: ChangeEvent<HTMLSelectElement>) => {
     setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+  };
 
   if (loading) {
     return <LoadingSpinner />;
@@ -196,13 +210,21 @@ const ProductPage: React.FC = () => {
           <h3>Produk Obat</h3>
         </div>
         <div className="card-body">
-          <Button
-            variant="primary"
-            className="mb-3"
-            onClick={() => handleOpenModal()}
-            title="Tambah produk ">
-            <FontAwesomeIcon icon={faPlus} /> {"Tambah"}
-          </Button>
+          <Stack direction="horizontal" gap={2} className="mb-3">
+            <Button
+              variant="primary"
+              onClick={() => handleOpenModal()}
+              title="Tambah produk">
+              <FontAwesomeIcon icon={faPlus} />
+            </Button>
+            <Form.Control
+              type="text"
+              placeholder="Cari produk..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="ms-auto"
+            />
+          </Stack>
 
           <Table striped bordered hover responsive>
             <thead>
@@ -405,6 +427,7 @@ const ProductPage: React.FC = () => {
                       name="bpjs_prb"
                       checked={currentProduct?.bpjs_prb || false}
                       onChange={handleChange}
+                      className="m-2"
                     />
                   </Form.Group>
 
@@ -421,12 +444,16 @@ const ProductPage: React.FC = () => {
               </Form>
             </Modal.Body>
             <Modal.Footer>
-              <Button variant="secondary" onClick={handleCloseModal}>
-                Batal
-              </Button>
-              <Button variant="primary" onClick={handleSaveProduct}>
-                Simpan
-              </Button>
+              <Stack direction="horizontal" gap={3}>
+                <Button variant="secondary" onClick={handleCloseModal}>
+                  <FontAwesomeIcon icon={faX} className="me-2" />
+                  {"Batal"}
+                </Button>
+                <Button variant="primary" onClick={handleSaveProduct}>
+                  <FontAwesomeIcon icon={faSave} className="me-2" />
+                  {"Simpan"}
+                </Button>
+              </Stack>
             </Modal.Footer>
           </Modal>
 

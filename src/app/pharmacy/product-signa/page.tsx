@@ -2,7 +2,13 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCaretLeft,
+  faCaretRight,
+  faEdit,
+  faPlus,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface Signa {
   id: number;
@@ -20,15 +26,16 @@ const SignaPage: React.FC = () => {
     pageIndex: number;
     pageSize: number;
   }>({
-    pageIndex: 0,
+    pageIndex: 1,
     pageSize: 10,
   });
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
     const loadSignas = async () => {
       try {
         const response = await fetch(
-          `${pharmacyServiceUrl}/signa?page=${pagination.pageIndex}&per_page=${pagination.pageSize}`
+          `${pharmacyServiceUrl}/signa?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -41,7 +48,7 @@ const SignaPage: React.FC = () => {
       }
     };
     loadSignas();
-  }, [pagination]);
+  }, [pagination, searchQuery]);
 
   const handleSaveSigna = async () => {
     if (!currentSigna) return;
@@ -155,6 +162,11 @@ const SignaPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+  };
+
   return (
     <div className="container mt-4">
       <div className="card">
@@ -162,13 +174,21 @@ const SignaPage: React.FC = () => {
           <h3>Signa</h3>
         </div>
         <div className="card-body">
-          <Button
-            variant="primary"
-            className="mb-3"
-            onClick={() => handleOpenModal()}
-            title="Tambah Signa">
-            <FontAwesomeIcon icon={faPlus} /> {"Tambah"}
-          </Button>
+          <Stack direction="horizontal" gap={2} className="mb-3">
+            <Button
+              variant="primary"
+              onClick={() => handleOpenModal()}
+              title="Tambah Signa">
+              <FontAwesomeIcon icon={faPlus} />
+            </Button>
+            <Form.Control
+              type="text"
+              placeholder="Cari signa..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="ms-auto"
+            />
+          </Stack>
 
           <Table striped bordered hover responsive>
             <thead>
@@ -181,7 +201,12 @@ const SignaPage: React.FC = () => {
             <tbody>
               {signas.map((signa, index) => (
                 <tr key={signa.id}>
-                  <td>{index + 1}</td>
+                  <td>
+                    {" "}
+                    {(pagination.pageIndex - 1) * pagination.pageSize +
+                      index +
+                      1}
+                  </td>
                   <td>{signa.name}</td>
                   <td>
                     <Stack direction="horizontal" gap={2}>
@@ -208,37 +233,35 @@ const SignaPage: React.FC = () => {
           {/* Pagination Controls */}
           <div className="pagination-controls">
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(0)}>
-              {"<<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(1)}
+              className="me-2">
+              {"Terbaru"}
             </Button>
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(pagination.pageIndex - 1)}>
-              {"<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(pagination.pageIndex - 1)}
+              className="me-2">
+              <FontAwesomeIcon icon={faCaretLeft}></FontAwesomeIcon>
+              {"Sebelumnya"}
             </Button>
             <Button
               disabled={signas.length < pagination.pageSize}
-              onClick={() => handlePageChange(pagination.pageIndex + 1)}>
-              {">"}
-            </Button>
-            <Button
-              disabled={signas.length < pagination.pageSize}
-              onClick={() =>
-                handlePageChange(
-                  Math.ceil(signas.length / pagination.pageSize) - 1
-                )
-              }>
-              {">>"}
+              onClick={() => handlePageChange(pagination.pageIndex + 1)}
+              className="me-2">
+              {"Selanjutnya"}
+              <FontAwesomeIcon icon={faCaretRight}></FontAwesomeIcon>
             </Button>
 
-            <select value={pagination.pageSize} onChange={handlePageSizeChange}>
-              {[10, 20, 30, 40, 50].map((size) => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
+            <Form.Select
+              value={pagination.pageSize}
+              onChange={handlePageSizeChange}
+              className="ms-2"
+              style={{ width: "auto", display: "inline-block" }}>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </Form.Select>
           </div>
 
           {/* Modal for Add/Edit Signa */}

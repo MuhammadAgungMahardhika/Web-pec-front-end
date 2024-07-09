@@ -1,9 +1,11 @@
 // Import yang diperlukan
 "use client";
 import React, { useState, useEffect, ChangeEvent } from "react";
-import { Button, Table, Modal } from "react-bootstrap";
+import { Button, Table, Modal, Form, Stack } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
+  faCaretLeft,
+  faCaretRight,
   faEdit,
   faInfo,
   faPlus,
@@ -33,10 +35,10 @@ const RecipePage: React.FC = () => {
     pageIndex: number;
     pageSize: number;
   }>({
-    pageIndex: 0,
+    pageIndex: 1,
     pageSize: 10,
   });
-
+  const [searchQuery, setSearchQuery] = useState<string>("");
   // State untuk modal delete
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
@@ -46,7 +48,7 @@ const RecipePage: React.FC = () => {
     const fetchRecipes = async () => {
       try {
         const response = await fetch(
-          `${recipeServiceUrl}/order?page=${pagination.pageIndex}&per_page=${pagination.pageSize}`
+          `${recipeServiceUrl}/order?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -60,7 +62,7 @@ const RecipePage: React.FC = () => {
     };
 
     fetchRecipes();
-  }, [pagination]);
+  }, [pagination, searchQuery]);
 
   // Menghapus resep dari daftar
   const handleDeleteRecipe = async (recipe: Recipe) => {
@@ -96,6 +98,11 @@ const RecipePage: React.FC = () => {
     setPagination({ ...pagination, pageSize: Number(e.target.value) });
   };
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+  };
+
   return (
     <div className="container mt-4">
       <div className="card">
@@ -103,13 +110,20 @@ const RecipePage: React.FC = () => {
           <h3>Daftar Resep</h3>
         </div>
         <div className="card-body">
-          {/* Tombol Tambah Resep */}
-          <Link href="/pharmacy/recipe/add" passHref>
-            <Button variant="primary" className="mb-3">
-              <FontAwesomeIcon icon={faPlus} /> Tambah Resep
-            </Button>
-          </Link>
-
+          <Stack direction="horizontal" gap={2} className="mb-3">
+            <Link href="/pharmacy/recipe/add" passHref>
+              <Button variant="primary">
+                <FontAwesomeIcon icon={faPlus} />
+              </Button>
+            </Link>
+            <Form.Control
+              type="text"
+              placeholder="Cari no resep..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="ms-auto"
+            />
+          </Stack>
           {/* Tabel Daftar Resep */}
           <Table striped bordered hover responsive>
             <thead>
@@ -131,13 +145,13 @@ const RecipePage: React.FC = () => {
                   <td>{recipe.id_poli}</td>
                   <td>{recipe.date}</td>
                   <td>
-                    <Button variant="info" className="me-2 btn-sm">
-                      <Link
-                        href={`/pharmacy/recipe/detail?id=${recipe.id}`}
-                        passHref>
+                    <Link
+                      href={`/pharmacy/recipe/detail?id=${recipe.id}`}
+                      passHref>
+                      <Button variant="outline-light" className="me-2 btn-sm">
                         <FontAwesomeIcon icon={faInfo} size="xs" />
-                      </Link>
-                    </Button>
+                      </Button>
+                    </Link>
 
                     <Link
                       href={`/pharmacy/recipe/edit?id=${recipe.id}`}
@@ -162,41 +176,38 @@ const RecipePage: React.FC = () => {
             </tbody>
           </Table>
 
-          {/* Kontrol Halaman */}
+          {/* Pagination Controls */}
           <div className="pagination-controls">
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(0)}>
-              {"<<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(1)}
+              className="me-2">
+              {"Terbaru"}
             </Button>
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(pagination.pageIndex - 1)}>
-              {"<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(pagination.pageIndex - 1)}
+              className="me-2">
+              <FontAwesomeIcon icon={faCaretLeft}></FontAwesomeIcon>
+              {"Sebelumnya"}
             </Button>
             <Button
               disabled={recipes.length < pagination.pageSize}
-              onClick={() => handlePageChange(pagination.pageIndex + 1)}>
-              {">"}
-            </Button>
-            <Button
-              disabled={recipes.length < pagination.pageSize}
-              onClick={() =>
-                handlePageChange(
-                  Math.ceil(recipes.length / pagination.pageSize) - 1
-                )
-              }>
-              {">>"}
+              onClick={() => handlePageChange(pagination.pageIndex + 1)}
+              className="me-2">
+              {"Selanjutnya"}
+              <FontAwesomeIcon icon={faCaretRight}></FontAwesomeIcon>
             </Button>
 
-            {/* Pilihan Jumlah Item per Halaman */}
-            <select value={pagination.pageSize} onChange={handlePageSizeChange}>
-              {[10, 20, 30, 40, 50].map((size) => (
-                <option key={size} value={size}>
-                  Tampilkan {size}
-                </option>
-              ))}
-            </select>
+            <Form.Select
+              value={pagination.pageSize}
+              onChange={handlePageSizeChange}
+              className="ms-2"
+              style={{ width: "auto", display: "inline-block" }}>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </Form.Select>
           </div>
         </div>
       </div>

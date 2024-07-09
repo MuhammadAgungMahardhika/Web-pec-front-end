@@ -2,7 +2,13 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faCaretLeft,
+  faCaretRight,
+  faEdit,
+  faPlus,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface ProductCategory {
   id: number;
@@ -23,15 +29,15 @@ const ProductCategoryPage: React.FC = () => {
     pageIndex: number;
     pageSize: number;
   }>({
-    pageIndex: 0,
+    pageIndex: 1,
     pageSize: 10,
   });
-
+  const [searchQuery, setSearchQuery] = useState<string>("");
   useEffect(() => {
     const loadProductCategories = async () => {
       try {
         const response = await fetch(
-          `${pharmacyServiceUrl}/product-category?page=${pagination.pageIndex}&per_page=${pagination.pageSize}`
+          `${pharmacyServiceUrl}/product-category?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
         if (response.ok) {
           const data = await response.json();
@@ -47,7 +53,7 @@ const ProductCategoryPage: React.FC = () => {
       }
     };
     loadProductCategories();
-  }, [pagination]);
+  }, [pagination, searchQuery]);
 
   const handleSaveProductCategory = async () => {
     if (!currentProductCategory) return;
@@ -169,6 +175,11 @@ const ProductCategoryPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
 
+  const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
+    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+  };
+
   return (
     <div className="container mt-4">
       <div className="card">
@@ -176,13 +187,21 @@ const ProductCategoryPage: React.FC = () => {
           <h3>Kategori Produk</h3>
         </div>
         <div className="card-body">
-          <Button
-            variant="primary"
-            className="mb-3"
-            onClick={() => handleOpenModal()}
-            title="Tambah kategori produk">
-            <FontAwesomeIcon icon={faPlus} /> {"Tambah"}
-          </Button>
+          <Stack direction="horizontal" gap={2} className="mb-3">
+            <Button
+              variant="primary"
+              onClick={() => handleOpenModal()}
+              title="Tambah kategori produk">
+              <FontAwesomeIcon icon={faPlus} />
+            </Button>
+            <Form.Control
+              type="text"
+              placeholder="Cari kategori produk..."
+              value={searchQuery}
+              onChange={handleSearchChange}
+              className="ms-auto"
+            />
+          </Stack>
 
           <Table striped bordered hover responsive>
             <thead>
@@ -195,9 +214,14 @@ const ProductCategoryPage: React.FC = () => {
             <tbody>
               {productCategories.map((category, index) => (
                 <tr key={category.id}>
-                  <td>{index + 1}</td>
-                  <td>{category.name}</td>
                   <td>
+                    {" "}
+                    {(pagination.pageIndex - 1) * pagination.pageSize +
+                      index +
+                      1}
+                  </td>
+                  <td>{category.name}</td>
+                  <td className="text-center">
                     <Stack direction="horizontal" gap={2}>
                       <Button
                         variant="primary"
@@ -222,37 +246,35 @@ const ProductCategoryPage: React.FC = () => {
           {/* Pagination Controls */}
           <div className="pagination-controls">
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(0)}>
-              {"<<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(1)}
+              className="me-2">
+              {"Terbaru"}
             </Button>
             <Button
-              disabled={pagination.pageIndex === 0}
-              onClick={() => handlePageChange(pagination.pageIndex - 1)}>
-              {"<"}
+              disabled={pagination.pageIndex === 1}
+              onClick={() => handlePageChange(pagination.pageIndex - 1)}
+              className="me-2">
+              <FontAwesomeIcon icon={faCaretLeft}></FontAwesomeIcon>
+              {"Sebelumnya"}
             </Button>
             <Button
               disabled={productCategories.length < pagination.pageSize}
-              onClick={() => handlePageChange(pagination.pageIndex + 1)}>
-              {">"}
-            </Button>
-            <Button
-              disabled={productCategories.length < pagination.pageSize}
-              onClick={() =>
-                handlePageChange(
-                  Math.ceil(productCategories.length / pagination.pageSize) - 1
-                )
-              }>
-              {">>"}
+              onClick={() => handlePageChange(pagination.pageIndex + 1)}
+              className="me-2">
+              {"Selanjutnya"}
+              <FontAwesomeIcon icon={faCaretRight}></FontAwesomeIcon>
             </Button>
 
-            <select value={pagination.pageSize} onChange={handlePageSizeChange}>
-              {[10, 20, 30, 40, 50].map((size) => (
-                <option key={size} value={size}>
-                  Show {size}
-                </option>
-              ))}
-            </select>
+            <Form.Select
+              value={pagination.pageSize}
+              onChange={handlePageSizeChange}
+              className="ms-2"
+              style={{ width: "auto", display: "inline-block" }}>
+              <option value={10}>10</option>
+              <option value={25}>25</option>
+              <option value={50}>50</option>
+            </Form.Select>
           </div>
 
           {/* Modal for Add/Edit Product Category */}
