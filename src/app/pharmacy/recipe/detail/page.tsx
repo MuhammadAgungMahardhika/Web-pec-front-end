@@ -2,6 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { useState, useEffect, ChangeEvent, useCallback, useMemo } from "react";
 import {
+  Stack,
   Breadcrumb,
   Modal,
   Button,
@@ -334,7 +335,7 @@ const DetailRecipe: React.FC = () => {
         </Modal.Header>
         <Modal.Body>
           <Form>
-            <Form.Group controlId="product">
+            <Form.Group controlId="product" className="mb-2">
               <Form.Label>Produk</Form.Label>
               <AsyncSelect
                 cacheOptions
@@ -344,35 +345,29 @@ const DetailRecipe: React.FC = () => {
                 name="id_product"
               />
             </Form.Group>
-            <Form.Group controlId="signa">
-              <Form.Label>Signa</Form.Label>
-              <AsyncSelect
-                cacheOptions
-                defaultOptions
-                onChange={handleSelectChange}
-                loadOptions={loadSignaOptions}
-                name="id_signa"
-              />
-            </Form.Group>
-            <Form.Group controlId="quantity">
-              <Form.Label>Jumlah</Form.Label>
-              <Form.Control
-                type="number"
-                name="quantity"
-                value={currentDetail?.quantity || 0}
-                onChange={handleChange}
-              />
-            </Form.Group>
-            <Form.Group controlId="price">
-              <Form.Label>Harga</Form.Label>
-              <Form.Control
-                type="number"
-                name="price"
-                value={currentDetail?.price || 0}
-                onChange={handleChange}
-              />
-            </Form.Group>
-            <Form.Group controlId="dosis">
+            <Stack direction="horizontal" gap={3} className="mb-2">
+              <Form.Group controlId="signa">
+                <Form.Label>Signa</Form.Label>
+                <AsyncSelect
+                  cacheOptions
+                  defaultOptions
+                  onChange={handleSelectChange}
+                  loadOptions={loadSignaOptions}
+                  name="id_signa"
+                />
+              </Form.Group>
+              <Form.Group controlId="quantity">
+                <Form.Label>Jumlah</Form.Label>
+                <Form.Control
+                  type="number"
+                  name="quantity"
+                  value={currentDetail?.quantity || 0}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Stack>
+
+            <Form.Group controlId="dosis" className="mb-2">
               <Form.Label>Dosis</Form.Label>
               <Form.Control
                 type="number"
@@ -381,24 +376,26 @@ const DetailRecipe: React.FC = () => {
                 onChange={handleChange}
               />
             </Form.Group>
-            <Form.Group controlId="note">
-              <Form.Label>Catatan</Form.Label>
-              <Form.Control
-                type="text"
-                name="note"
-                value={currentDetail?.note || ""}
-                onChange={handleChange}
-              />
-            </Form.Group>
-            <Form.Group controlId="note2">
-              <Form.Label>Catatan Tambahan</Form.Label>
-              <Form.Control
-                type="text"
-                name="note2"
-                value={currentDetail?.note2 || ""}
-                onChange={handleChange}
-              />
-            </Form.Group>
+            <Stack direction="horizontal" gap={3} className="mb-2">
+              <Form.Group controlId="note">
+                <Form.Label>Catatan</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="note"
+                  value={currentDetail?.note || ""}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+              <Form.Group controlId="note2">
+                <Form.Label>Catatan Tambahan</Form.Label>
+                <Form.Control
+                  type="text"
+                  name="note2"
+                  value={currentDetail?.note2 || ""}
+                  onChange={handleChange}
+                />
+              </Form.Group>
+            </Stack>
           </Form>
         </Modal.Body>
         <Modal.Footer>
