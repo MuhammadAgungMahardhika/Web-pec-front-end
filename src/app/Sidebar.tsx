@@ -54,6 +54,20 @@ const menues: menu[] = [
           },
         ],
       },
+      {
+        name: "Warehouse",
+        icon: "bi bi-stack",
+        submenu: [
+          {
+            name: "Settting",
+            link: "/warehouse/setting",
+          },
+          {
+            name: "Penyedia",
+            link: "/warehouse/supplier",
+          },
+        ],
+      },
     ],
   },
 ];

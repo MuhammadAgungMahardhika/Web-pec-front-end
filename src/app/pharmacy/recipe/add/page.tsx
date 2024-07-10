@@ -1,16 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  FormSelect,
-  Stack,
-  Breadcrumb,
-  Form,
-  Button,
-  Col,
-  Row,
-  FormControl,
-} from "react-bootstrap";
+import { Stack, Breadcrumb, Form, Button, FormControl } from "react-bootstrap";
 import AsyncSelect from "react-select/async";
 
 import Link from "next/link";
@@ -26,7 +17,7 @@ interface Recipe {
   total_amount: number;
   status: string;
   bpjs_sep: string;
-  bpjs_iteration: string;
+  bpjs_iteration: boolean;
 }
 
 // Fungsi untuk mendapatkan tanggal sekarang dalam format YYYY-MM-DD
@@ -49,12 +40,15 @@ const AddRecipePage: React.FC = () => {
     total_amount: 50000,
     status: "pending",
     bpjs_sep: "",
-    bpjs_iteration: "0",
+    bpjs_iteration: false,
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setNewRecipe({ ...newRecipe, [name]: value });
+    const { name, value, type, checked } = e.target;
+    setNewRecipe({
+      ...newRecipe,
+      [name]: type === "checkbox" ? checked : value,
+    });
   };
 
   const handleSelectChange = (e: any) => {
@@ -234,11 +228,11 @@ const AddRecipePage: React.FC = () => {
 
               <Form.Group controlId="formRecipeBpjsIteration">
                 <Form.Label>Iterasi BPJS</Form.Label>
-                <Form.Control
-                  type="text"
+                <Form.Check
+                  type="checkbox"
                   placeholder="Masukkan iterasi BPJS"
                   name="bpjs_iteration"
-                  value={newRecipe.bpjs_iteration}
+                  checked={newRecipe.bpjs_iteration}
                   onChange={handleInputChange}
                   autoComplete="off"
                   required
