@@ -1,7 +1,14 @@
 "use client";
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Stack, Breadcrumb, Form, Button, FormControl } from "react-bootstrap";
+import {
+  Image,
+  Stack,
+  Breadcrumb,
+  Form,
+  Button,
+  FormControl,
+} from "react-bootstrap";
 import AsyncSelect from "react-select/async";
 
 import Link from "next/link";
@@ -18,6 +25,7 @@ interface Recipe {
   status: string;
   bpjs_sep: string;
   bpjs_iteration: boolean;
+  recipe_type: string;
 }
 
 // Fungsi untuk mendapatkan tanggal sekarang dalam format YYYY-MM-DD
@@ -41,6 +49,7 @@ const AddRecipePage: React.FC = () => {
     status: "pending",
     bpjs_sep: "",
     bpjs_iteration: false,
+    recipe_type: "Umum",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,6 +63,16 @@ const AddRecipePage: React.FC = () => {
   const handleSelectChange = (e: any) => {
     const { name, value } = e.target;
     setNewRecipe({ ...newRecipe, [name]: parseInt(value, 10) });
+  };
+
+  const handleRecipeTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { value } = e.target;
+    setNewRecipe({
+      ...newRecipe,
+      recipe_type: value,
+      bpjs_sep: value === "BPJS" ? newRecipe.bpjs_sep : "",
+      bpjs_iteration: value === "BPJS" ? newRecipe.bpjs_iteration : false,
+    });
   };
 
   const handleAddRecipe = async (e: any) => {
@@ -100,10 +119,41 @@ const AddRecipePage: React.FC = () => {
         </div>
         <div className="card-body">
           <Form onSubmit={handleAddRecipe}>
+            <Form.Group controlId="formRecipeType">
+              <Form.Label>Jaminan</Form.Label>
+              <Stack direction="horizontal" gap={2}>
+                <Form.Check
+                  type="radio"
+                  label={
+                    <Stack direction="horizontal" gap={2}>
+                      <Image
+                        src="/assets/images/logo/logo_pec.svg"
+                        width={40}
+                        height={40}
+                        alt="Umum"
+                      />
+                      <span>Umum</span>
+                    </Stack>
+                  }
+                  name="recipe_type"
+                  value="Umum"
+                  checked={newRecipe.recipe_type === "Umum"}
+                  onChange={handleRecipeTypeChange}
+                />
+                <Form.Check
+                  type="radio"
+                  label="BPJS"
+                  name="recipe_type"
+                  value="BPJS"
+                  checked={newRecipe.recipe_type === "BPJS"}
+                  onChange={handleRecipeTypeChange}
+                />
+              </Stack>
+            </Form.Group>
             <Stack direction="horizontal" gap={3} className="mb-2">
               <Form.Group controlId="formNoRecipe">
                 <Form.Label>
-                  Nomo resep <span className="text-danger"> * </span>
+                  Nomor Resep <span className="text-danger"> * </span>
                 </Form.Label>
                 <Form.Control
                   type="text"
@@ -129,7 +179,7 @@ const AddRecipePage: React.FC = () => {
                 </FormControl>
               </Form.Group>
               <Form.Group controlId="formNoMrPatient">
-                <Form.Label>No mr</Form.Label>
+                <Form.Label>No MR</Form.Label>
                 <AsyncSelect
                   cacheOptions
                   defaultOptions
@@ -213,31 +263,35 @@ const AddRecipePage: React.FC = () => {
                 />
               </Form.Group>
 
-              <Form.Group controlId="formRecipeBpjsSep">
-                <Form.Label>BPJS SEP</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Masukkan BPJS SEP"
-                  name="bpjs_sep"
-                  value={newRecipe.bpjs_sep}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  required
-                />
-              </Form.Group>
+              {newRecipe.recipe_type === "BPJS" && (
+                <>
+                  <Form.Group controlId="formRecipeBpjsSep">
+                    <Form.Label>BPJS SEP</Form.Label>
+                    <Form.Control
+                      type="text"
+                      placeholder="Masukkan BPJS SEP"
+                      name="bpjs_sep"
+                      value={newRecipe.bpjs_sep}
+                      onChange={handleInputChange}
+                      autoComplete="off"
+                      required
+                    />
+                  </Form.Group>
 
-              <Form.Group controlId="formRecipeBpjsIteration">
-                <Form.Label>Iterasi BPJS</Form.Label>
-                <Form.Check
-                  type="checkbox"
-                  placeholder="Masukkan iterasi BPJS"
-                  name="bpjs_iteration"
-                  checked={newRecipe.bpjs_iteration}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  required
-                />
-              </Form.Group>
+                  <Form.Group controlId="formRecipeBpjsIteration">
+                    <Form.Label>Iterasi BPJS</Form.Label>
+                    <Form.Check
+                      type="checkbox"
+                      placeholder="Masukkan iterasi BPJS"
+                      name="bpjs_iteration"
+                      checked={newRecipe.bpjs_iteration}
+                      onChange={handleInputChange}
+                      autoComplete="off"
+                      required
+                    />
+                  </Form.Group>
+                </>
+              )}
             </Stack>
 
             <Button type="submit" variant="primary" className="mt-4">

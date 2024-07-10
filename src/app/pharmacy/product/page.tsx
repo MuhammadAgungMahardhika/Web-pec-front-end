@@ -1,7 +1,8 @@
 "use client";
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent, useCallback } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import AsyncSelect from "react-select/async";
 
 import {
   faCaretLeft,
@@ -21,6 +22,7 @@ import {
 interface Product {
   id: number;
   id_category: number;
+  id_unit: number;
   code: string;
   name: string;
   description: string;
@@ -31,6 +33,11 @@ interface Product {
   bpjs_prb: boolean;
   chronic: boolean;
   generic: string;
+}
+
+interface SelectOption {
+  label: string | "";
+  value: number | null;
 }
 
 const ProductPage: React.FC = () => {
@@ -48,7 +55,6 @@ const ProductPage: React.FC = () => {
     pageIndex: 1,
     pageSize: 10,
   });
-
   const [searchQuery, setSearchQuery] = useState<string>("");
 
   useEffect(() => {
@@ -87,13 +93,16 @@ const ProductPage: React.FC = () => {
         body: JSON.stringify(currentProduct),
       });
 
+      console.log(currentProduct);
       if (response.ok) {
         SuccessAlert("Berhasil menambahkan produk");
         const updatedProduct = await response.json();
         if (isEditMode) {
           setProducts((prev) =>
             prev.map((product) =>
-              product.id === currentProduct.id ? updatedProduct.data : product
+              product.id === updatedProduct.data.id
+                ? updatedProduct.data
+                : product
             )
           );
         } else {
@@ -149,6 +158,7 @@ const ProductPage: React.FC = () => {
       setCurrentProduct({
         id: 0,
         id_category: 0,
+        id_unit: 0,
         code: "",
         name: "",
         description: "",
@@ -199,6 +209,69 @@ const ProductPage: React.FC = () => {
     setSearchQuery(e.target.value);
     setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
   };
+
+  const loadProductCategoryOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${pharmacyServiceUrl}/product-category?search=${inputValue}`
+        );
+        const successResponse = await response.json();
+        const options = successResponse.data.map((productCategory: any) => ({
+          value: productCategory.id,
+          label: productCategory.name,
+        }));
+
+        return options;
+      } catch (error) {
+        console.error("Error fetching product Category options:", error);
+        return [];
+      }
+    },
+    [pharmacyServiceUrl]
+  );
+
+  const loadProductUnitOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${pharmacyServiceUrl}/product-unit?search=${inputValue}`
+        );
+        const successResponse = await response.json();
+        const options = successResponse.data.map((productUnit: any) => ({
+          value: productUnit.id,
+          label: productUnit.name,
+        }));
+
+        return options;
+      } catch (error) {
+        console.error("Error fetching product Unit options:", error);
+        return [];
+      }
+    },
+    [pharmacyServiceUrl]
+  );
+
+  const handleSelectChange = (
+    selectedOption: SelectOption | null,
+    action: any
+  ) => {
+    console.log(selectedOption);
+    console.log(action);
+    if (currentProduct && action.name) {
+      setCurrentProduct({
+        ...currentProduct,
+        [action.name]: selectedOption ? selectedOption.value : 0,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (showModal) {
+      loadProductCategoryOption("");
+      loadProductUnitOption("");
+    }
+  }, [showModal, loadProductCategoryOption, loadProductUnitOption]);
 
   if (loading) {
     return <LoadingSpinner />;
@@ -326,8 +399,8 @@ const ProductPage: React.FC = () => {
             </Modal.Header>
             <Modal.Body>
               <Form>
-                <Stack direction="horizontal" gap={2}>
-                  <Form.Group controlId="formCode">
+                <Stack direction="horizontal" gap={2} className="mb-2">
+                  <Form.Group controlId="formCode" style={{ flex: 1 }}>
                     <Form.Label>
                       Kode <span className="text-danger"> * </span>
                     </Form.Label>
@@ -339,7 +412,7 @@ const ProductPage: React.FC = () => {
                     />
                   </Form.Group>
 
-                  <Form.Group controlId="formName">
+                  <Form.Group controlId="formName" style={{ flex: 1 }}>
                     <Form.Label>
                       Nama
                       <span className="text-danger"> * </span>
@@ -353,8 +426,33 @@ const ProductPage: React.FC = () => {
                   </Form.Group>
                 </Stack>
 
-                <Stack direction="horizontal" gap={2}>
-                  <Form.Group controlId="formPrice">
+                <Stack direction="horizontal" gap={2} className="mb-2">
+                  <Form.Group
+                    controlId="formProductCategory"
+                    style={{ flex: 1 }}>
+                    <Form.Label>Kategori</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      onChange={handleSelectChange}
+                      loadOptions={loadProductCategoryOption}
+                      name="id_category"
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="formProductUnit" style={{ flex: 1 }}>
+                    <Form.Label>Satuan</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      onChange={handleSelectChange}
+                      loadOptions={loadProductUnitOption}
+                      name="id_unit"
+                    />
+                  </Form.Group>
+                </Stack>
+
+                <Stack direction="horizontal" gap={2} className="mb-2">
+                  <Form.Group controlId="formPrice" style={{ flex: 1 }}>
                     <Form.Label>
                       Harga
                       <span className="text-danger"> * </span>
@@ -367,7 +465,7 @@ const ProductPage: React.FC = () => {
                     />
                   </Form.Group>
 
-                  <Form.Group controlId="formStockQuantity">
+                  <Form.Group controlId="formStockQuantity" style={{ flex: 1 }}>
                     <Form.Label>Jumlah Stok</Form.Label>
                     <Form.Control
                       type="number"
@@ -378,7 +476,10 @@ const ProductPage: React.FC = () => {
                   </Form.Group>
                 </Stack>
 
-                <Form.Group controlId="formDescription">
+                <Form.Group
+                  controlId="formDescription"
+                  className="mb-2"
+                  style={{ flex: 1 }}>
                   <Form.Label>Deskripsi</Form.Label>
                   <Form.Control
                     type="text"
@@ -388,7 +489,10 @@ const ProductPage: React.FC = () => {
                   />
                 </Form.Group>
 
-                <Form.Group controlId="formExpired">
+                <Form.Group
+                  controlId="formExpired"
+                  className="mb-2"
+                  style={{ flex: 1 }}>
                   <Form.Label>Kedaluwarsa</Form.Label>
                   <Form.Control
                     type="date"
@@ -398,8 +502,8 @@ const ProductPage: React.FC = () => {
                   />
                 </Form.Group>
 
-                <Stack direction="horizontal" gap={2}>
-                  <Form.Group controlId="formRestriction">
+                <Stack direction="horizontal" gap={2} className="mb-2">
+                  <Form.Group controlId="formRestriction" style={{ flex: 1 }}>
                     <Form.Label>Pembatasan</Form.Label>
                     <Form.Control
                       type="text"
@@ -408,7 +512,7 @@ const ProductPage: React.FC = () => {
                       onChange={handleChange}
                     />
                   </Form.Group>
-                  <Form.Group controlId="formGeneric">
+                  <Form.Group controlId="formGeneric" style={{ flex: 1 }}>
                     <Form.Label>Generik</Form.Label>
                     <Form.Control
                       type="text"
@@ -419,7 +523,7 @@ const ProductPage: React.FC = () => {
                   </Form.Group>
                 </Stack>
 
-                <Stack direction="horizontal" gap={2}>
+                <Stack direction="horizontal" gap={2} className="mb-2">
                   <Form.Group controlId="formBpjsPrb">
                     <Form.Check
                       type="checkbox"

@@ -49,6 +49,10 @@ const menues: menu[] = [
             link: "/pharmacy/product-category",
           },
           {
+            name: "Satuan produk",
+            link: "/pharmacy/product-unit",
+          },
+          {
             name: "Signa",
             link: "/pharmacy/product-signa",
           },
