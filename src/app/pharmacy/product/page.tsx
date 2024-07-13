@@ -434,7 +434,11 @@ const ProductPage: React.FC = () => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveProduct();
+                }}>
                 <Stack direction="horizontal" gap={2} className="mb-2">
                   <Form.Group controlId="formCode" style={{ flex: 1 }}>
                     <Form.Label>

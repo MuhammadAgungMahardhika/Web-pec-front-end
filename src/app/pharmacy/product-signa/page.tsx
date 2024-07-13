@@ -272,7 +272,11 @@ const SignaPage: React.FC = () => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveSigna();
+                }}>
                 <Form.Group controlId="formName">
                   <Form.Label>Nama</Form.Label>
                   <Form.Control

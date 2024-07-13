@@ -273,7 +273,11 @@ const ProductUnitPage: React.FC = () => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveProductUnit();
+                }}>
                 <Form.Group controlId="formName">
                   <Form.Label>Nama</Form.Label>
                   <Form.Control
