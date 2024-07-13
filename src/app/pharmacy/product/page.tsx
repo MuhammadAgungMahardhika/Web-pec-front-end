@@ -35,9 +35,13 @@ interface Product {
   generic: string;
 }
 
+interface Pagination {
+  pageIndex: number;
+  pageSize: number;
+}
 interface SelectOption {
-  label: string | "";
   value: number | null;
+  label: string | "";
 }
 
 const ProductPage: React.FC = () => {
@@ -48,14 +52,16 @@ const ProductPage: React.FC = () => {
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
-  const [pagination, setPagination] = useState<{
-    pageIndex: number;
-    pageSize: number;
-  }>({
+  const [pagination, setPagination] = useState<Pagination>({
     pageIndex: 1,
     pageSize: 10,
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
+
+  const [initialCategory, setInitialCategory] = useState<SelectOption | null>(
+    null
+  );
+  const [initialUnit, setInitialUnit] = useState<SelectOption | null>(null);
 
   useEffect(() => {
     const loadProducts = async () => {
@@ -93,30 +99,32 @@ const ProductPage: React.FC = () => {
         body: JSON.stringify(currentProduct),
       });
 
-      console.log(currentProduct);
-      if (response.ok) {
-        SuccessAlert("Berhasil menambahkan produk");
-        const updatedProduct = await response.json();
-        if (isEditMode) {
-          setProducts((prev) =>
-            prev.map((product) =>
-              product.id === updatedProduct.data.id
-                ? updatedProduct.data
-                : product
-            )
-          );
-        } else {
-          setProducts((prev) => [updatedProduct.data, ...prev]);
-        }
-        setShowModal(false);
-        setCurrentProduct(null);
-      } else {
-        console.error("Failed to save product:", response.statusText);
-        FailedAlert("Failed to save product. Please try again.");
+      if (!response.ok) {
+        // Throw an error with the response status text
+        throw new Error(response.statusText);
       }
-    } catch (error) {
+
+      const updatedProduct = await response.json();
+      console.log(currentProduct);
+      SuccessAlert("Berhasil menambahkan produk");
+
+      if (isEditMode) {
+        setProducts((prev) =>
+          prev.map((product) =>
+            product.id === updatedProduct.data.id
+              ? updatedProduct.data
+              : product
+          )
+        );
+      } else {
+        setProducts((prev) => [updatedProduct.data, ...prev]);
+      }
+
+      setShowModal(false);
+      setCurrentProduct(null);
+    } catch (error: any) {
       console.error("Failed to save product:", error);
-      FailedAlert("Failed to save product. An error occurred.");
+      FailedAlert(`Failed to save product: ${error.message}`);
     }
   };
 
@@ -133,46 +141,59 @@ const ProductPage: React.FC = () => {
         }
       );
 
-      if (response.ok) {
-        SuccessAlert("Berhasil menghapus produk");
-        setProducts((prev) =>
-          prev.filter((product) => product.id !== currentProduct.id)
-        );
-        setShowDeleteModal(false);
-        setCurrentProduct(null);
-      } else {
-        console.error("Failed to delete product:", response.statusText);
-        FailedAlert("Failed to delete product. Please try again.");
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
-    } catch (error) {
+
+      SuccessAlert("Berhasil menghapus produk");
+      setProducts((prev) =>
+        prev.filter((product) => product.id !== currentProduct.id)
+      );
+      setShowDeleteModal(false);
+      setCurrentProduct(null);
+    } catch (error: any) {
       console.error("Failed to delete product:", error);
-      FailedAlert("Failed to delete product. An error occurred.");
+      FailedAlert(`Failed to delete product: : ${error.message}`);
     }
   };
 
-  const handleOpenModal = (product?: Product) => {
+  const handleOpenModal = async (product?: Product) => {
     if (product) {
       setCurrentProduct(product);
       setIsEditMode(true);
+
+      // Load initial values for category and unit
+      if (product.id_category && product.id_unit) {
+        const [categoryResponse, unitResponse] = await Promise.all([
+          fetch(
+            `${pharmacyServiceUrl}/product-category/${product.id_category}`
+          ),
+          fetch(`${pharmacyServiceUrl}/product-unit/${product.id_unit}`),
+        ]);
+
+        if (categoryResponse.ok && unitResponse.ok) {
+          const categoryData = await categoryResponse.json();
+          const unitData = await unitResponse.json();
+
+          console.log(categoryData.data.name);
+          console.log(unitData.data.name);
+          setInitialCategory({
+            value: categoryData.data.id,
+            label: categoryData.data.name,
+          });
+          setInitialUnit({
+            value: unitData.data.id,
+            label: unitData.data.name,
+          });
+        }
+      } else {
+        setInitialCategory(null);
+        setInitialUnit(null);
+      }
+      setShowModal(true);
     } else {
-      setCurrentProduct({
-        id: 0,
-        id_category: 0,
-        id_unit: 0,
-        code: "",
-        name: "",
-        description: "",
-        price: 0,
-        stock_quantity: 0,
-        expired: "",
-        restriction: "",
-        bpjs_prb: false,
-        chronic: false,
-        generic: "",
-      });
-      setIsEditMode(false);
+      setShowModal(false);
     }
-    setShowModal(true);
   };
 
   const handleOpenDeleteModal = (product: Product) => {
@@ -434,6 +455,7 @@ const ProductPage: React.FC = () => {
                     <AsyncSelect
                       cacheOptions
                       defaultOptions
+                      defaultValue={initialCategory}
                       onChange={handleSelectChange}
                       loadOptions={loadProductCategoryOption}
                       name="id_category"
@@ -444,6 +466,7 @@ const ProductPage: React.FC = () => {
                     <AsyncSelect
                       cacheOptions
                       defaultOptions
+                      defaultValue={initialUnit}
                       onChange={handleSelectChange}
                       loadOptions={loadProductUnitOption}
                       name="id_unit"
