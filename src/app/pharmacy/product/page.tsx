@@ -21,8 +21,8 @@ import {
 } from "@/app/components/alert/alert";
 interface Product {
   id: number;
-  id_category: number;
-  id_unit: number;
+  id_category: number | null;
+  id_unit: number | null;
   code: string;
   name: string;
   description: string;
@@ -190,10 +190,25 @@ const ProductPage: React.FC = () => {
         setInitialCategory(null);
         setInitialUnit(null);
       }
-      setShowModal(true);
     } else {
-      setShowModal(false);
+      setCurrentProduct({
+        id: 0,
+        id_category: null,
+        id_unit: null,
+        code: "",
+        name: "",
+        description: "",
+        price: 0,
+        stock_quantity: 0,
+        expired: "",
+        restriction: "",
+        bpjs_prb: false,
+        chronic: false,
+        generic: "",
+      });
+      setIsEditMode(false);
     }
+    setShowModal(true);
   };
 
   const handleOpenDeleteModal = (product: Product) => {
