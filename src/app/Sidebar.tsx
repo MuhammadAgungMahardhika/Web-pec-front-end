@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 interface submenu {
   name: string;
@@ -79,8 +81,15 @@ const menues: menu[] = [
 const Sidebar = () => {
   const pathname = usePathname();
   const [activeMenu, setActiveMenu] = useState(0);
+  const [isThemeChecked, setIsThemeChecked] = useState(false);
   const [openedSubmenues, setOpenedSubmenues] = useState<number[]>([]);
 
+  useEffect(() => {
+    const currentTheme = localStorage.getItem("theme");
+    if (currentTheme === "dark") {
+      setIsThemeChecked(true);
+    }
+  }, []);
   const clickItem = (index: number, sub: any) => {
     let submenues = openedSubmenues;
     if (sub) {
@@ -148,6 +157,15 @@ const Sidebar = () => {
     });
   };
 
+  const handleChangeTheme = (event: any) => {
+    if (event.target.checked) {
+      localStorage.setItem("theme", "dark");
+      setIsThemeChecked(true);
+    } else {
+      localStorage.setItem("theme", "light");
+      setIsThemeChecked(false);
+    }
+  };
   return (
     <div className="sidebar-wrapper active">
       <div className="sidebar-header position-relative">
@@ -195,6 +213,8 @@ const Sidebar = () => {
                 className="form-check-input me-0"
                 type="checkbox"
                 id="toggle-dark"
+                checked={isThemeChecked}
+                onChange={handleChangeTheme}
                 style={{ cursor: "pointer" }}
               />
               <label className="form-check-label"></label>
@@ -223,6 +243,7 @@ const Sidebar = () => {
       <div className="sidebar-menu">
         <ul className="menu">{renderMenu()}</ul>
       </div>
+      <ToastContainer />
     </div>
   );
 };

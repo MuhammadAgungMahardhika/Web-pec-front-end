@@ -219,7 +219,7 @@ const ProductCategoryPage: React.FC = () => {
                       1}
                   </td>
                   <td>{category.name}</td>
-                  <td className="text-center">
+                  <td>
                     <Stack direction="horizontal" gap={2}>
                       <Button
                         variant="primary"

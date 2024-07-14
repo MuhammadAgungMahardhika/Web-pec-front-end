@@ -14,11 +14,8 @@ import {
   faX,
 } from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "@/app/components/spinner/spinner";
-import {
-  SuccessAlert,
-  FailedAlert,
-  WarningAlert,
-} from "@/app/components/alert/alert";
+
+import { SuccessToast, FailedToast } from "@/app/components/toast/toast";
 
 interface Product {
   id: number;
@@ -79,7 +76,7 @@ const ProductPage: React.FC = () => {
         setLoading(false);
       } catch (error: any) {
         console.error("Failed to load product units:", error);
-        FailedAlert("Failed to load product units:" + error.message);
+        FailedToast("Failed to load product units:" + error.message);
       }
     };
     loadProducts();
@@ -115,17 +112,17 @@ const ProductPage: React.FC = () => {
               : product
           )
         );
-        SuccessAlert("Berhasil mengedit produk");
+        SuccessToast("Berhasil mengedit produk");
       } else {
         setProducts((prev) => [updatedProduct.data, ...prev]);
-        SuccessAlert("Berhasil menambahkan produk");
+        SuccessToast("Berhasil menambahkan produk");
       }
 
       setShowModal(false);
       setCurrentProduct(null);
     } catch (error: any) {
       console.error("Failed to save product:", error);
-      FailedAlert(`Failed to save product: ${error.message}`);
+      FailedToast(`Failed to save product: ${error.message}`);
     }
   };
 
@@ -146,7 +143,7 @@ const ProductPage: React.FC = () => {
         throw new Error(response.statusText);
       }
 
-      SuccessAlert("Berhasil menghapus produk");
+      SuccessToast("Berhasil menghapus produk");
       setProducts((prev) =>
         prev.filter((product) => product.id !== currentProduct.id)
       );
@@ -154,7 +151,7 @@ const ProductPage: React.FC = () => {
       setCurrentProduct(null);
     } catch (error: any) {
       console.error("Failed to delete product:", error);
-      FailedAlert(`Failed to delete product: : ${error.message}`);
+      FailedToast(`Failed to delete product: : ${error.message}`);
     }
   };
 
@@ -192,7 +189,7 @@ const ProductPage: React.FC = () => {
           });
         } catch (error: any) {
           console.error("Failed to retrieve:", error);
-          FailedAlert(`Failed to retrieve: ${error.message}`);
+          FailedToast(`Failed to retrieve: ${error.message}`);
         }
       } else {
         setInitialCategory(null);
@@ -274,7 +271,7 @@ const ProductPage: React.FC = () => {
         return options;
       } catch (error: any) {
         console.error("Failed to load product categories:", error);
-        FailedAlert("Failed to load product categories:" + error.message);
+        FailedToast("Failed to load product categories:" + error.message);
         return [];
       }
     },
@@ -300,7 +297,7 @@ const ProductPage: React.FC = () => {
         return options;
       } catch (error: any) {
         console.error("Failed to load product units:", error);
-        FailedAlert("Failed to load product units:" + error.message);
+        FailedToast("Failed to load product units:" + error.message);
         return [];
       }
     },
