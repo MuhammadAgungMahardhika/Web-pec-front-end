@@ -9,6 +9,8 @@ import {
   faPlus,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import { FailedAlert } from "@/app/components/alert/alert";
+import LoadingSpinner from "@/app/components/spinner/spinner";
 
 interface ProductUnit {
   id: number;
@@ -17,6 +19,7 @@ interface ProductUnit {
 
 const ProductUnitPage: React.FC = () => {
   const pharmacyServiceUrl = "http://localhost:8082/api";
+  const [loading, setLoading] = useState<boolean>(true);
   const [productUnits, setProductUnits] = useState<ProductUnit[]>([]);
   const [currentProductUnit, setCurrentProductUnit] =
     useState<ProductUnit | null>(null);
@@ -38,14 +41,17 @@ const ProductUnitPage: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/product-unit?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setProductUnits(data.data);
-        } else {
-          console.error("Failed to load product units:", response.statusText);
+
+        setLoading(false);
+        if (!response.ok) {
+          console.error(response.statusText);
+          throw new Error(response.statusText);
         }
-      } catch (error) {
+        const data = await response.json();
+        setProductUnits(data.data);
+      } catch (error: any) {
         console.error("Failed to load product units:", error);
+        FailedAlert("Failed to load product units:" + error.message);
       }
     };
     loadProductUnits();
@@ -67,26 +73,26 @@ const ProductUnitPage: React.FC = () => {
         body: JSON.stringify(currentProductUnit),
       });
 
-      if (response.ok) {
-        const updatedProductUnit = await response.json();
-        if (isEditMode) {
-          setProductUnits((prev) =>
-            prev.map((unit) =>
-              unit.id === currentProductUnit.id ? updatedProductUnit.data : unit
-            )
-          );
-        } else {
-          setProductUnits((prev) => [updatedProductUnit.data, ...prev]);
-        }
-        setShowModal(false);
-        setCurrentProductUnit(null);
-      } else {
-        console.error("Failed to save product unit:", response.statusText);
-        alert("Failed to save product unit. Please try again.");
+      if (!response.ok) {
+        console.error(response.statusText);
+        throw new Error(response.statusText);
       }
-    } catch (error) {
+
+      const updatedProductUnit = await response.json();
+      if (isEditMode) {
+        setProductUnits((prev) =>
+          prev.map((unit) =>
+            unit.id === currentProductUnit.id ? updatedProductUnit.data : unit
+          )
+        );
+      } else {
+        setProductUnits((prev) => [updatedProductUnit.data, ...prev]);
+      }
+      setShowModal(false);
+      setCurrentProductUnit(null);
+    } catch (error: any) {
       console.error("Failed to save product unit:", error);
-      alert("Failed to save product unit. An error occurred.");
+      FailedAlert("Failed to save product unit:" + error.message);
     }
   };
 
@@ -102,17 +108,16 @@ const ProductUnitPage: React.FC = () => {
           },
         }
       );
-
-      if (response.ok) {
-        setProductUnits((prev) =>
-          prev.filter((unit) => unit.id !== currentProductUnit.id)
-        );
-        setShowDeleteModal(false);
-        setCurrentProductUnit(null);
-      } else {
-        console.error("Failed to delete product unit:", response.statusText);
-        alert("Failed to delete product unit. Please try again.");
+      if (!response.ok) {
+        console.error(response.statusText);
+        throw new Error(response.statusText);
       }
+
+      setProductUnits((prev) =>
+        prev.filter((unit) => unit.id !== currentProductUnit.id)
+      );
+      setShowDeleteModal(false);
+      setCurrentProductUnit(null);
     } catch (error) {
       console.error("Failed to delete product unit:", error);
       alert("Failed to delete product unit. An error occurred.");
@@ -165,9 +170,12 @@ const ProductUnitPage: React.FC = () => {
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, pageIndex: 1 }));
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   return (
     <div className="container mt-4">
       <div className="card">

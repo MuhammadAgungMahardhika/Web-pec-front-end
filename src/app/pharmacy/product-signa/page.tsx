@@ -9,6 +9,8 @@ import {
   faPlus,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import LoadingSpinner from "@/app/components/spinner/spinner";
+import { FailedAlert } from "@/app/components/alert/alert";
 
 interface Signa {
   id: number;
@@ -17,6 +19,7 @@ interface Signa {
 
 const SignaPage: React.FC = () => {
   const pharmacyServiceUrl = "http://localhost:8082/api";
+  const [loading, setLoading] = useState<boolean>(true);
   const [signas, setSignas] = useState<Signa[]>([]);
   const [currentSigna, setCurrentSigna] = useState<Signa | null>(null);
   const [showModal, setShowModal] = useState(false);
@@ -37,14 +40,17 @@ const SignaPage: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/signa?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setSignas(data.data);
-        } else {
-          console.error("Failed to load signas:", response.statusText);
+        setLoading(false);
+        if (!response.ok) {
+          console.error(response.statusText);
+          throw new Error(response.statusText);
         }
-      } catch (error) {
-        console.error("Failed to load signas:", error);
+
+        const data = await response.json();
+        setSignas(data.data);
+      } catch (error: any) {
+        console.error("Failed to load product units:", error);
+        FailedAlert("Failed to load product units:" + error.message);
       }
     };
     loadSignas();
@@ -66,26 +72,26 @@ const SignaPage: React.FC = () => {
         body: JSON.stringify(currentSigna),
       });
 
-      if (response.ok) {
-        const updatedSigna = await response.json();
-        if (isEditMode) {
-          setSignas((prev) =>
-            prev.map((signa) =>
-              signa.id === currentSigna.id ? updatedSigna.data : signa
-            )
-          );
-        } else {
-          setSignas((prev) => [updatedSigna.data, ...prev]);
-        }
-        setShowModal(false);
-        setCurrentSigna(null);
-      } else {
-        console.error("Failed to save signa:", response.statusText);
-        alert("Failed to save signa. Please try again.");
+      if (!response.ok) {
+        console.error(response.statusText);
+        throw new Error(response.statusText);
       }
-    } catch (error) {
-      console.error("Failed to save signa:", error);
-      alert("Failed to save signa. An error occurred.");
+
+      const updatedSigna = await response.json();
+      if (isEditMode) {
+        setSignas((prev) =>
+          prev.map((signa) =>
+            signa.id === currentSigna.id ? updatedSigna.data : signa
+          )
+        );
+      } else {
+        setSignas((prev) => [updatedSigna.data, ...prev]);
+      }
+      setShowModal(false);
+      setCurrentSigna(null);
+    } catch (error: any) {
+      console.error("Failed to load product units:", error);
+      FailedAlert("Failed to load product units:" + error.message);
     }
   };
 
@@ -102,19 +108,17 @@ const SignaPage: React.FC = () => {
         }
       );
 
-      if (response.ok) {
-        setSignas((prev) =>
-          prev.filter((signa) => signa.id !== currentSigna.id)
-        );
-        setShowDeleteModal(false);
-        setCurrentSigna(null);
-      } else {
-        console.error("Failed to delete signa:", response.statusText);
-        alert("Failed to delete signa. Please try again.");
+      if (!response.ok) {
+        console.error(response.statusText);
+        throw new Error(response.statusText);
       }
-    } catch (error) {
-      console.error("Failed to delete signa:", error);
-      alert("Failed to delete signa. An error occurred.");
+
+      setSignas((prev) => prev.filter((signa) => signa.id !== currentSigna.id));
+      setShowDeleteModal(false);
+      setCurrentSigna(null);
+    } catch (error: any) {
+      console.error("Failed to load product units:", error);
+      FailedAlert("Failed to load product units:" + error.message);
     }
   };
 
@@ -167,6 +171,9 @@ const SignaPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   return (
     <div className="container mt-4">
       <div className="card">

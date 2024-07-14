@@ -19,6 +19,7 @@ import {
   FailedAlert,
   WarningAlert,
 } from "@/app/components/alert/alert";
+
 interface Product {
   id: number;
   id_category: number | null;
@@ -69,15 +70,16 @@ const ProductPage: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/product?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setProducts(data.data);
-          setLoading(false);
-        } else {
-          console.error("Failed to load products:", response.statusText);
+        if (!response.ok) {
+          throw new Error(response.statusText);
         }
-      } catch (error) {
-        console.error("Failed to load products:", error);
+
+        const data = await response.json();
+        setProducts(data.data);
+        setLoading(false);
+      } catch (error: any) {
+        console.error("Failed to load product units:", error);
+        FailedAlert("Failed to load product units:" + error.message);
       }
     };
     loadProducts();
@@ -100,7 +102,6 @@ const ProductPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        // Throw an error with the response status text
         throw new Error(response.statusText);
       }
 
@@ -162,21 +163,25 @@ const ProductPage: React.FC = () => {
       setCurrentProduct(product);
       setIsEditMode(true);
 
-      // Load initial values for category and unit
       if (product.id_category && product.id_unit) {
-        const [categoryResponse, unitResponse] = await Promise.all([
-          fetch(
-            `${pharmacyServiceUrl}/product-category/${product.id_category}`
-          ),
-          fetch(`${pharmacyServiceUrl}/product-unit/${product.id_unit}`),
-        ]);
+        try {
+          const [categoryResponse, unitResponse] = await Promise.all([
+            fetch(
+              `${pharmacyServiceUrl}/product-category/${product.id_category}`
+            ),
+            fetch(`${pharmacyServiceUrl}/product-unit/${product.id_unit}`),
+          ]);
 
-        if (categoryResponse.ok && unitResponse.ok) {
+          if (!categoryResponse.ok) {
+            throw new Error(categoryResponse.statusText);
+          }
+          if (!unitResponse.ok) {
+            throw new Error(unitResponse.statusText);
+          }
+
           const categoryData = await categoryResponse.json();
           const unitData = await unitResponse.json();
 
-          console.log(categoryData.data.name);
-          console.log(unitData.data.name);
           setInitialCategory({
             value: categoryData.data.id,
             label: categoryData.data.name,
@@ -185,6 +190,9 @@ const ProductPage: React.FC = () => {
             value: unitData.data.id,
             label: unitData.data.name,
           });
+        } catch (error: any) {
+          console.error("Failed to retrieve:", error);
+          FailedAlert(`Failed to retrieve: ${error.message}`);
         }
       } else {
         setInitialCategory(null);
@@ -206,6 +214,8 @@ const ProductPage: React.FC = () => {
         chronic: false,
         generic: "",
       });
+      setInitialCategory(null);
+      setInitialUnit(null);
       setIsEditMode(false);
     }
     setShowModal(true);
@@ -252,6 +262,9 @@ const ProductPage: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/product-category?search=${inputValue}`
         );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
         const successResponse = await response.json();
         const options = successResponse.data.map((productCategory: any) => ({
           value: productCategory.id,
@@ -259,8 +272,9 @@ const ProductPage: React.FC = () => {
         }));
 
         return options;
-      } catch (error) {
-        console.error("Error fetching product Category options:", error);
+      } catch (error: any) {
+        console.error("Failed to load product categories:", error);
+        FailedAlert("Failed to load product categories:" + error.message);
         return [];
       }
     },
@@ -273,6 +287,10 @@ const ProductPage: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/product-unit?search=${inputValue}`
         );
+
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
         const successResponse = await response.json();
         const options = successResponse.data.map((productUnit: any) => ({
           value: productUnit.id,
@@ -280,8 +298,9 @@ const ProductPage: React.FC = () => {
         }));
 
         return options;
-      } catch (error) {
-        console.error("Error fetching product Unit options:", error);
+      } catch (error: any) {
+        console.error("Failed to load product units:", error);
+        FailedAlert("Failed to load product units:" + error.message);
         return [];
       }
     },
@@ -292,8 +311,6 @@ const ProductPage: React.FC = () => {
     selectedOption: SelectOption | null,
     action: any
   ) => {
-    console.log(selectedOption);
-    console.log(action);
     if (currentProduct && action.name) {
       setCurrentProduct({
         ...currentProduct,
@@ -301,13 +318,6 @@ const ProductPage: React.FC = () => {
       });
     }
   };
-
-  useEffect(() => {
-    if (showModal) {
-      loadProductCategoryOption("");
-      loadProductUnitOption("");
-    }
-  }, [showModal, loadProductCategoryOption, loadProductUnitOption]);
 
   if (loading) {
     return <LoadingSpinner />;

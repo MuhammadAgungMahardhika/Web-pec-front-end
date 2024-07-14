@@ -10,6 +10,7 @@ import {
   faPlus,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
+import { FailedAlert } from "@/app/components/alert/alert";
 
 interface ProductCategory {
   id: number;
@@ -42,18 +43,16 @@ const ProductCategoryPage: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/product-category?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setProductCategories(data.data);
-          setLoading(false);
-        } else {
-          console.error(
-            "Failed to load product categories:",
-            response.statusText
-          );
+        setLoading(false);
+        if (!response.ok) {
+          throw new Error(response.statusText);
         }
-      } catch (error) {
-        console.error("Failed to load product categories:", error);
+        const data = await response.json();
+        setProductCategories(data.data);
+        setLoading(false);
+      } catch (error: any) {
+        console.error("Failed to load product units:", error);
+        FailedAlert("Failed to load product units:" + error.message);
       }
     };
     loadProductCategories();
@@ -75,31 +74,27 @@ const ProductCategoryPage: React.FC = () => {
         body: JSON.stringify(currentProductCategory),
       });
 
-      if (response.ok) {
-        const updatedProductCategory = await response.json();
-        if (isEditMode) {
-          setProductCategories((prev) =>
-            prev.map((category) =>
-              category.id === currentProductCategory.id
-                ? updatedProductCategory.data
-                : category
-            )
-          );
-        } else {
-          setProductCategories((prev) => [
-            updatedProductCategory.data,
-            ...prev,
-          ]);
-        }
-        setShowModal(false);
-        setCurrentProductCategory(null);
-      } else {
-        console.error("Failed to save product category:", response.statusText);
-        alert("Failed to save product category. Please try again.");
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
-    } catch (error) {
-      console.error("Failed to save product category:", error);
-      alert("Failed to save product category. An error occurred.");
+
+      const updatedProductCategory = await response.json();
+      if (isEditMode) {
+        setProductCategories((prev) =>
+          prev.map((category) =>
+            category.id === currentProductCategory.id
+              ? updatedProductCategory.data
+              : category
+          )
+        );
+      } else {
+        setProductCategories((prev) => [updatedProductCategory.data, ...prev]);
+      }
+      setShowModal(false);
+      setCurrentProductCategory(null);
+    } catch (error: any) {
+      console.error("Failed to load product units:", error);
+      FailedAlert("Failed to load product units:" + error.message);
     }
   };
 
@@ -116,22 +111,18 @@ const ProductCategoryPage: React.FC = () => {
         }
       );
 
-      if (response.ok) {
-        setProductCategories((prev) =>
-          prev.filter((category) => category.id !== currentProductCategory.id)
-        );
-        setShowDeleteModal(false);
-        setCurrentProductCategory(null);
-      } else {
-        console.error(
-          "Failed to delete product category:",
-          response.statusText
-        );
-        alert("Failed to delete product category. Please try again.");
+      if (!response.ok) {
+        throw new Error(response.statusText);
       }
-    } catch (error) {
-      console.error("Failed to delete product category:", error);
-      alert("Failed to delete product category. An error occurred.");
+
+      setProductCategories((prev) =>
+        prev.filter((category) => category.id !== currentProductCategory.id)
+      );
+      setShowDeleteModal(false);
+      setCurrentProductCategory(null);
+    } catch (error: any) {
+      console.error("Failed to load product units:", error);
+      FailedAlert("Failed to load product units:" + error.message);
     }
   };
 
