@@ -105,8 +105,6 @@ const ProductPage: React.FC = () => {
       }
 
       const updatedProduct = await response.json();
-      console.log(currentProduct);
-      SuccessAlert("Berhasil menambahkan produk");
 
       if (isEditMode) {
         setProducts((prev) =>
@@ -116,8 +114,10 @@ const ProductPage: React.FC = () => {
               : product
           )
         );
+        SuccessAlert("Berhasil mengedit produk");
       } else {
         setProducts((prev) => [updatedProduct.data, ...prev]);
+        SuccessAlert("Berhasil menambahkan produk");
       }
 
       setShowModal(false);

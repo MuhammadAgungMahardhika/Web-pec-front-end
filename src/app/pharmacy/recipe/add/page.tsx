@@ -2,6 +2,8 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
+  Row,
+  Col,
   Image,
   Stack,
   Breadcrumb,
@@ -10,7 +12,7 @@ import {
   FormControl,
 } from "react-bootstrap";
 import AsyncSelect from "react-select/async";
-
+import { SuccessAlert, FailedAlert } from "@/app/components/alert/alert";
 import Link from "next/link";
 
 interface Recipe {
@@ -28,7 +30,6 @@ interface Recipe {
   recipe_type: string;
 }
 
-// Fungsi untuk mendapatkan tanggal sekarang dalam format YYYY-MM-DD
 const getCurrentDate = () => {
   return new Date().toISOString().split("T")[0];
 };
@@ -88,17 +89,15 @@ const AddRecipePage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to save recipe");
+        throw new Error(response.statusText);
       }
 
       const data: any = await response.json();
-      console.log(data.data);
 
-      // Redirect ke halaman lain setelah menyimpan resep
-      router.push(`/pharmacy/recipe/detail?id=${data.data.id}`); // Ganti dengan path yang sesuai setelah berhasil menyimpan
-    } catch (error) {
-      console.error("Failed to add recipe:", error);
-      alert("Failed to add recipe. An error occurred.");
+      router.push(`/pharmacy/recipe/detail?id=${data.data.id}`);
+    } catch (error: any) {
+      console.error(error);
+      FailedAlert(`Failed to add recipe:${error.message}`);
     }
   };
 
@@ -119,152 +118,179 @@ const AddRecipePage: React.FC = () => {
         </div>
         <div className="card-body">
           <Form onSubmit={handleAddRecipe}>
-            <Form.Group controlId="formRecipeType">
-              <Form.Label>Jaminan</Form.Label>
-              <Stack direction="horizontal" gap={2}>
-                <Form.Check
-                  type="radio"
-                  label={
-                    <Stack direction="horizontal" gap={2}>
-                      <Image
-                        src="/assets/images/logo/logo_pec.svg"
-                        width={40}
-                        height={40}
-                        alt="Umum"
-                      />
-                      <span>Umum</span>
-                    </Stack>
-                  }
-                  name="recipe_type"
-                  value="Umum"
-                  checked={newRecipe.recipe_type === "Umum"}
-                  onChange={handleRecipeTypeChange}
-                />
-                <Form.Check
-                  type="radio"
-                  label="BPJS"
-                  name="recipe_type"
-                  value="BPJS"
-                  checked={newRecipe.recipe_type === "BPJS"}
-                  onChange={handleRecipeTypeChange}
-                />
-              </Stack>
-            </Form.Group>
-            <Stack direction="horizontal" gap={3} className="mb-2">
-              <Form.Group controlId="formNoRecipe">
-                <Form.Label>
-                  Nomor Resep <span className="text-danger"> * </span>
-                </Form.Label>
-                <Form.Control
-                  type="text"
-                  name="no_of_receipt"
-                  onChange={handleInputChange}
-                  value={newRecipe.no_of_receipt}
-                />
-              </Form.Group>
+            <Row className="mb-2">
+              <Col>
+                <Form.Group controlId="formRecipeType">
+                  <Form.Label>Jaminan</Form.Label>
+                  <Stack direction="horizontal" gap={2}>
+                    <Form.Check
+                      type="radio"
+                      label={
+                        <Stack direction="horizontal" gap={2}>
+                          <Image
+                            src="/assets/images/logo/logo_pec.svg"
+                            width={40}
+                            height={40}
+                            alt="Umum"
+                          />
+                          <span>Umum</span>
+                        </Stack>
+                      }
+                      name="recipe_type"
+                      value="Umum"
+                      checked={newRecipe.recipe_type === "Umum"}
+                      onChange={handleRecipeTypeChange}
+                    />
+                    <Form.Check
+                      type="radio"
+                      label="BPJS"
+                      name="recipe_type"
+                      value="BPJS"
+                      checked={newRecipe.recipe_type === "BPJS"}
+                      onChange={handleRecipeTypeChange}
+                    />
+                  </Stack>
+                </Form.Group>
+              </Col>
+            </Row>
 
-              <Form.Group controlId="formPoli">
-                <Form.Label>
-                  Poli
-                  <span className="text-danger"> * </span>
-                </Form.Label>
-                <FormControl
-                  as={"select"}
-                  name="id_poli"
-                  onChange={handleSelectChange}
-                  value={newRecipe.id_poli}>
-                  <option value="1">Poli 1</option>
-                  <option value="2">Poli 2</option>
-                  <option value="3">Poli 3</option>
-                </FormControl>
-              </Form.Group>
-              <Form.Group controlId="formNoMrPatient">
-                <Form.Label>No MR</Form.Label>
-                <AsyncSelect
-                  cacheOptions
-                  defaultOptions
-                  onChange={handleSelectChange}
-                  loadOptions={loadNoMrOption}
-                  name="id_patient"
-                />
-              </Form.Group>
-              <Form.Group controlId="formDoctorCode">
-                <Form.Label>Kode Dokter</Form.Label>
-                <AsyncSelect
-                  cacheOptions
-                  defaultOptions
-                  onChange={handleSelectChange}
-                  loadOptions={loadNoMrOption}
-                  name="id_doctor"
-                />
-              </Form.Group>
-              <Form.Group controlId="formDate">
-                <Form.Label>
-                  Tanggal Resep <span className="text-danger"> * </span>
-                </Form.Label>
-                <Form.Control
-                  type="date"
-                  name="date"
-                  value={newRecipe.date || getCurrentDate()}
-                  onChange={handleInputChange}
-                />
-              </Form.Group>
-              <Form.Group controlId="formDateOfService">
-                <Form.Label>
-                  Tanggal Dilayani <span className="text-danger"> * </span>
-                </Form.Label>
-                <Form.Control
-                  type="date"
-                  name="date_of_service"
-                  value={newRecipe.date_of_service || getCurrentDate()}
-                  onChange={handleInputChange}
-                />
-              </Form.Group>
-            </Stack>
-            <Stack direction="horizontal" gap={3} className="mb-2">
-              <Form.Group controlId="formRecipeMedicineType">
-                <Form.Label>Jenis Obat</Form.Label>
-                <Form.Control
-                  as="select"
-                  name="kind_of_medicine"
-                  value={newRecipe.kind_of_medicine}
-                  onChange={handleSelectChange}
-                  autoComplete="off"
-                  required>
-                  <option value="">Pilih jenis obat</option>
-                  <option value={1}>Obat PRB</option>
-                  <option value={2}>Obat Kronis Blm Stabil</option>
-                  <option value={3}>Obat Kemoterapi</option>
-                </Form.Control>
-              </Form.Group>
-              <Form.Group controlId="formRecipeTotalAmount">
-                <Form.Label>Jumlah Total</Form.Label>
-                <Form.Control
-                  type="number"
-                  placeholder="Masukkan jumlah total"
-                  name="total_amount"
-                  value={newRecipe.total_amount}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  required
-                />
-              </Form.Group>
+            <Row className="mb-2">
+              <Col>
+                <Form.Group controlId="formNoRecipe">
+                  <Form.Label>
+                    Nomor <span className="text-danger"> * </span>
+                  </Form.Label>
+                  <Form.Control
+                    type="text"
+                    name="no_of_receipt"
+                    onChange={handleInputChange}
+                    value={newRecipe.no_of_receipt}
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formPoli">
+                  <Form.Label>
+                    Poli
+                    <span className="text-danger"> * </span>
+                  </Form.Label>
+                  <FormControl
+                    as={"select"}
+                    name="id_poli"
+                    onChange={handleSelectChange}
+                    value={newRecipe.id_poli}>
+                    <option value="1">Poli 1</option>
+                    <option value="2">Poli 2</option>
+                    <option value="3">Poli 3</option>
+                  </FormControl>
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formNoMrPatient">
+                  <Form.Label>
+                    Pasien <span className="text-danger"> * </span>
+                  </Form.Label>
+                  <AsyncSelect
+                    cacheOptions
+                    defaultOptions
+                    onChange={handleSelectChange}
+                    loadOptions={loadNoMrOption}
+                    name="id_patient"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formDoctorCode">
+                  <Form.Label>
+                    Dokter <span className="text-danger"> * </span>
+                  </Form.Label>
+                  <AsyncSelect
+                    cacheOptions
+                    defaultOptions
+                    onChange={handleSelectChange}
+                    loadOptions={loadNoMrOption}
+                    name="id_doctor"
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formDate">
+                  <Form.Label>
+                    Tanggal Resep <span className="text-danger"> * </span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="date"
+                    value={newRecipe.date || getCurrentDate()}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formDateOfService">
+                  <Form.Label>
+                    Tanggal Dilayani <span className="text-danger"> * </span>
+                  </Form.Label>
+                  <Form.Control
+                    type="date"
+                    name="date_of_service"
+                    value={newRecipe.date_of_service || getCurrentDate()}
+                    onChange={handleInputChange}
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
+            <Row className="mb-2">
+              <Col>
+                <Form.Group controlId="formRecipeMedicineType">
+                  <Form.Label>Jenis Obat</Form.Label>
+                  <Form.Control
+                    as="select"
+                    name="kind_of_medicine"
+                    value={newRecipe.kind_of_medicine}
+                    onChange={handleSelectChange}
+                    autoComplete="off"
+                    required>
+                    <option value="">Pilih jenis obat</option>
+                    <option value={1}>Obat PRB</option>
+                    <option value={2}>Obat Kronis Blm Stabil</option>
+                    <option value={3}>Obat Kemoterapi</option>
+                  </Form.Control>
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formRecipeTotalAmount">
+                  <Form.Label>Jumlah Total</Form.Label>
+                  <Form.Control
+                    type="number"
+                    placeholder="Masukkan jumlah total"
+                    name="total_amount"
+                    value={newRecipe.total_amount}
+                    onChange={handleInputChange}
+                    autoComplete="off"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+              <Col>
+                <Form.Group controlId="formRecipeStatus">
+                  <Form.Label>Status</Form.Label>
+                  <Form.Control
+                    type="text"
+                    placeholder="Masukkan status"
+                    name="status"
+                    value={newRecipe.status}
+                    onChange={handleInputChange}
+                    autoComplete="off"
+                    required
+                  />
+                </Form.Group>
+              </Col>
+            </Row>
 
-              <Form.Group controlId="formRecipeStatus">
-                <Form.Label>Status</Form.Label>
-                <Form.Control
-                  type="text"
-                  placeholder="Masukkan status"
-                  name="status"
-                  value={newRecipe.status}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  required
-                />
-              </Form.Group>
-
-              {newRecipe.recipe_type === "BPJS" && (
-                <>
+            {newRecipe.recipe_type === "BPJS" && (
+              <Row className="mb-2">
+                <Col>
                   <Form.Group controlId="formRecipeBpjsSep">
                     <Form.Label>BPJS SEP</Form.Label>
                     <Form.Control
@@ -277,7 +303,8 @@ const AddRecipePage: React.FC = () => {
                       required
                     />
                   </Form.Group>
-
+                </Col>
+                <Col>
                   <Form.Group controlId="formRecipeBpjsIteration">
                     <Form.Label>Iterasi BPJS</Form.Label>
                     <Form.Check
@@ -290,9 +317,9 @@ const AddRecipePage: React.FC = () => {
                       required
                     />
                   </Form.Group>
-                </>
-              )}
-            </Stack>
+                </Col>
+              </Row>
+            )}
 
             <Button type="submit" variant="primary" className="mt-4">
               Simpan

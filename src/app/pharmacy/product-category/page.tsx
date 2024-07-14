@@ -2,6 +2,7 @@
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import LoadingSpinner from "@/app/components/spinner/spinner";
 import {
   faCaretLeft,
   faCaretRight,
@@ -22,6 +23,8 @@ const ProductCategoryPage: React.FC = () => {
   );
   const [currentProductCategory, setCurrentProductCategory] =
     useState<ProductCategory | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -42,6 +45,7 @@ const ProductCategoryPage: React.FC = () => {
         if (response.ok) {
           const data = await response.json();
           setProductCategories(data.data);
+          setLoading(false);
         } else {
           console.error(
             "Failed to load product categories:",
@@ -180,6 +184,9 @@ const ProductCategoryPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
   };
 
+  if (loading) {
+    return <LoadingSpinner />;
+  }
   return (
     <div className="container mt-4">
       <div className="card">
@@ -259,7 +266,7 @@ const ProductCategoryPage: React.FC = () => {
               {"Sebelumnya"}
             </Button>
             <Button
-              disabled={productCategories.length < pagination.pageSize}
+              disabled={productCategories.length <= pagination.pageSize}
               onClick={() => handlePageChange(pagination.pageIndex + 1)}
               className="me-2">
               {"Selanjutnya"}
