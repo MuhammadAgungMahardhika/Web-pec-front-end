@@ -272,158 +272,165 @@ const DetailRecipe: React.FC = () => {
   };
 
   return (
-    <Container>
+    <div className="container mt-4">
       <Breadcrumb>
         <Breadcrumb.Item linkAs={Link} href="/pharmacy/recipe">
           Resep Obat
         </Breadcrumb.Item>
         <Breadcrumb.Item active>Detail Resep</Breadcrumb.Item>
       </Breadcrumb>
-      <h2>Detail Resep</h2>
-      {recipeInfo && (
-        <div>
-          <p>Nomor Resep: {recipeInfo.no_of_receipt}</p>
-          <p>Tanggal: {recipeInfo.date}</p>
-          <p>Jenis Obat: {recipeInfo.kind_of_medicine}</p>
-        </div>
-      )}
-      <Button variant="primary" onClick={() => handleOpenModal()}>
-        <FontAwesomeIcon icon={faPlus} /> Tambah Detail Resep
-      </Button>
-      <Table striped bordered hover className="mt-3">
-        <thead>
-          <tr>
-            <th>No</th>
-            <th>Nama Produk</th>
-            <th>Signa</th>
-            <th>Jumlah</th>
-            <th>Harga</th>
-            <th>Aksi</th>
-          </tr>
-        </thead>
-        <tbody>
-          {recipeDetails.map((detail, index) => (
-            <tr key={detail.id}>
-              <td>{index + 1}</td>
-              <td>{detail.product_name}</td>
-              <td>{detail.signa_name}</td>
-              <td>{detail.quantity}</td>
-              <td>{detail.price}</td>
-              <td>
-                <Button
-                  variant="info"
-                  size="sm"
-                  onClick={() => handleOpenModal(detail)}>
-                  <FontAwesomeIcon icon={faEdit} /> Edit
-                </Button>{" "}
-                <Button
-                  variant="danger"
-                  size="sm"
-                  onClick={() => handleOpenDeleteModal(detail)}>
-                  <FontAwesomeIcon icon={faTrash} /> Hapus
-                </Button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </Table>
-      <Modal show={showModal} onHide={handleCloseModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>
-            {isEditMode ? "Edit" : "Tambah"} Detail Resep
-          </Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          <Form>
-            <Form.Group controlId="product" className="mb-2">
-              <Form.Label>Produk</Form.Label>
-              <AsyncSelect
-                cacheOptions
-                defaultOptions
-                onChange={handleSelectChange}
-                loadOptions={loadProductOptions}
-                name="id_product"
-              />
-            </Form.Group>
-            <Stack direction="horizontal" gap={3} className="mb-2">
-              <Form.Group controlId="signa">
-                <Form.Label>Signa</Form.Label>
-                <AsyncSelect
-                  cacheOptions
-                  defaultOptions
-                  onChange={handleSelectChange}
-                  loadOptions={loadSignaOptions}
-                  name="id_signa"
-                />
-              </Form.Group>
-              <Form.Group controlId="quantity">
-                <Form.Label>Jumlah</Form.Label>
-                <Form.Control
-                  type="number"
-                  name="quantity"
-                  value={currentDetail?.quantity || 0}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Stack>
 
-            <Form.Group controlId="dosis" className="mb-2">
-              <Form.Label>Dosis</Form.Label>
-              <Form.Control
-                type="number"
-                name="dosis"
-                value={currentDetail?.dosis || ""}
-                onChange={handleChange}
-              />
-            </Form.Group>
-            <Stack direction="horizontal" gap={3} className="mb-2">
-              <Form.Group controlId="note">
-                <Form.Label>Catatan</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="note"
-                  value={currentDetail?.note || ""}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-              <Form.Group controlId="note2">
-                <Form.Label>Catatan Tambahan</Form.Label>
-                <Form.Control
-                  type="text"
-                  name="note2"
-                  value={currentDetail?.note2 || ""}
-                  onChange={handleChange}
-                />
-              </Form.Group>
-            </Stack>
-          </Form>
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseModal}>
-            Batal
+      <div className="card">
+        <div className="card-header">
+          <h3>Detail Resep</h3>
+        </div>
+        <div className="card-body">
+          {recipeInfo && (
+            <div>
+              <p>Nomor Resep: {recipeInfo.no_of_receipt}</p>
+              <p>Tanggal: {recipeInfo.date}</p>
+              <p>Jenis Obat: {recipeInfo.kind_of_medicine}</p>
+            </div>
+          )}
+          <Button variant="primary" onClick={() => handleOpenModal()}>
+            <FontAwesomeIcon icon={faPlus} /> Tambah Detail Resep
           </Button>
-          <Button variant="primary" onClick={handleSaveDetail}>
-            Simpan
-          </Button>
-        </Modal.Footer>
-      </Modal>
-      <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>
-        <Modal.Header closeButton>
-          <Modal.Title>Konfirmasi Hapus</Modal.Title>
-        </Modal.Header>
-        <Modal.Body>
-          Apakah Anda yakin ingin menghapus detail resep ini?
-        </Modal.Body>
-        <Modal.Footer>
-          <Button variant="secondary" onClick={handleCloseDeleteModal}>
-            Batal
-          </Button>
-          <Button variant="danger" onClick={handleDeleteDetail}>
-            Hapus
-          </Button>
-        </Modal.Footer>
-      </Modal>
-    </Container>
+          <Table striped bordered hover className="mt-3">
+            <thead>
+              <tr>
+                <th>No</th>
+                <th>Nama Produk</th>
+                <th>Signa</th>
+                <th>Jumlah</th>
+                <th>Harga</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {recipeDetails.map((detail, index) => (
+                <tr key={detail.id}>
+                  <td>{index + 1}</td>
+                  <td>{detail.product_name}</td>
+                  <td>{detail.signa_name}</td>
+                  <td>{detail.quantity}</td>
+                  <td>{detail.price}</td>
+                  <td>
+                    <Button
+                      variant="info"
+                      size="sm"
+                      onClick={() => handleOpenModal(detail)}>
+                      <FontAwesomeIcon icon={faEdit} /> Edit
+                    </Button>{" "}
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleOpenDeleteModal(detail)}>
+                      <FontAwesomeIcon icon={faTrash} /> Hapus
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </Table>
+          <Modal show={showModal} onHide={handleCloseModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                {isEditMode ? "Edit" : "Tambah"} Detail Resep
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form>
+                <Form.Group controlId="product" className="mb-2">
+                  <Form.Label>Produk</Form.Label>
+                  <AsyncSelect
+                    cacheOptions
+                    defaultOptions
+                    onChange={handleSelectChange}
+                    loadOptions={loadProductOptions}
+                    name="id_product"
+                  />
+                </Form.Group>
+                <Stack direction="horizontal" gap={3} className="mb-2">
+                  <Form.Group controlId="signa">
+                    <Form.Label>Signa</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      onChange={handleSelectChange}
+                      loadOptions={loadSignaOptions}
+                      name="id_signa"
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="quantity">
+                    <Form.Label>Jumlah</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="quantity"
+                      value={currentDetail?.quantity || 0}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Stack>
+
+                <Form.Group controlId="dosis" className="mb-2">
+                  <Form.Label>Dosis</Form.Label>
+                  <Form.Control
+                    type="number"
+                    name="dosis"
+                    value={currentDetail?.dosis || ""}
+                    onChange={handleChange}
+                  />
+                </Form.Group>
+                <Stack direction="horizontal" gap={3} className="mb-2">
+                  <Form.Group controlId="note">
+                    <Form.Label>Catatan</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="note"
+                      value={currentDetail?.note || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="note2">
+                    <Form.Label>Catatan Tambahan</Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="note2"
+                      value={currentDetail?.note2 || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
+                </Stack>
+              </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleCloseModal}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={handleSaveDetail}>
+                Simpan
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={showDeleteModal} onHide={handleCloseDeleteModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>Konfirmasi Hapus</Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              Apakah Anda yakin ingin menghapus detail resep ini?
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleCloseDeleteModal}>
+                Batal
+              </Button>
+              <Button variant="danger" onClick={handleDeleteDetail}>
+                Hapus
+              </Button>
+            </Modal.Footer>
+          </Modal>
+        </div>
+      </div>
+    </div>
   );
 };
 

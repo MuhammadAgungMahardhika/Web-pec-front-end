@@ -118,7 +118,7 @@ const RecipePage: React.FC = () => {
             </Link>
             <Form.Control
               type="text"
-              placeholder="Cari no resep..."
+              placeholder="Cari resep..."
               value={searchQuery}
               onChange={handleSearchChange}
               className="ms-auto"
@@ -130,9 +130,9 @@ const RecipePage: React.FC = () => {
               <tr>
                 <th>#</th>
                 <th>Nomor Resep</th>
-                <th>ID Pasien</th>
-                <th>ID Poli</th>
-                <th>Tanggal</th>
+                <th>Nomor MR Pasien</th>
+                <th>Poli</th>
+                <th>Tanggal Resep</th>
                 <th>Aksi</th>
               </tr>
             </thead>

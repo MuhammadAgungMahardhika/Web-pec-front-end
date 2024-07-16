@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Row,
@@ -14,9 +14,10 @@ import {
 import AsyncSelect from "react-select/async";
 import { SuccessAlert, FailedAlert } from "@/app/components/alert/alert";
 import Link from "next/link";
+import { FailedToast } from "@/app/components/toast/toast";
 
 interface Recipe {
-  id_patient: number;
+  id_patient: string;
   id_poli: number;
   id_doctor: string;
   no_of_receipt: string;
@@ -26,7 +27,7 @@ interface Recipe {
   total_amount: number;
   status: string;
   bpjs_sep: string;
-  bpjs_iteration: boolean;
+  iteration: boolean;
   recipe_type: string;
 }
 
@@ -39,7 +40,7 @@ const AddRecipePage: React.FC = () => {
   const router = useRouter();
 
   const [newRecipe, setNewRecipe] = useState<Recipe>({
-    id_patient: 1,
+    id_patient: "",
     id_poli: 2,
     id_doctor: "",
     no_of_receipt: "",
@@ -48,8 +49,8 @@ const AddRecipePage: React.FC = () => {
     kind_of_medicine: 0,
     total_amount: 50000,
     status: "pending",
+    iteration: false,
     bpjs_sep: "",
-    bpjs_iteration: false,
     recipe_type: "Umum",
   });
 
@@ -61,9 +62,18 @@ const AddRecipePage: React.FC = () => {
     });
   };
 
-  const handleSelectChange = (e: any) => {
+  const handleChange = (e: any) => {
     const { name, value } = e.target;
     setNewRecipe({ ...newRecipe, [name]: parseInt(value, 10) });
+  };
+
+  const handleSelectChange = (selectedOption: any | null, action: any) => {
+    if (newRecipe && action.name) {
+      setNewRecipe({
+        ...newRecipe,
+        [action.name]: selectedOption ? selectedOption.value : null,
+      });
+    }
   };
 
   const handleRecipeTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -72,7 +82,6 @@ const AddRecipePage: React.FC = () => {
       ...newRecipe,
       recipe_type: value,
       bpjs_sep: value === "BPJS" ? newRecipe.bpjs_sep : "",
-      bpjs_iteration: value === "BPJS" ? newRecipe.bpjs_iteration : false,
     });
   };
 
@@ -89,6 +98,8 @@ const AddRecipePage: React.FC = () => {
       });
 
       if (!response.ok) {
+        const errorData = await response.json();
+        console.log(errorData);
         throw new Error(response.statusText);
       }
 
@@ -101,7 +112,30 @@ const AddRecipePage: React.FC = () => {
     }
   };
 
-  const loadNoMrOption = () => {};
+  const loadNoMrOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${pharmacyServiceUrl}/patient?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((patient: any) => ({
+          value: patient.no_mr,
+          label: patient.no_mr,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load patient:", error);
+        FailedToast("Failed to load patient:" + error.message);
+        return [];
+      }
+    },
+    [pharmacyServiceUrl]
+  );
 
   return (
     <div className="container mt-4">
@@ -176,8 +210,9 @@ const AddRecipePage: React.FC = () => {
                   </Form.Label>
                   <FormControl
                     as={"select"}
+                    type="number"
                     name="id_poli"
-                    onChange={handleSelectChange}
+                    onChange={handleChange}
                     value={newRecipe.id_poli}>
                     <option value="1">Poli 1</option>
                     <option value="2">Poli 2</option>
@@ -248,7 +283,7 @@ const AddRecipePage: React.FC = () => {
                     as="select"
                     name="kind_of_medicine"
                     value={newRecipe.kind_of_medicine}
-                    onChange={handleSelectChange}
+                    onChange={handleChange}
                     autoComplete="off"
                     required>
                     <option value="">Pilih jenis obat</option>
@@ -286,6 +321,18 @@ const AddRecipePage: React.FC = () => {
                   />
                 </Form.Group>
               </Col>
+              <Col>
+                <Form.Group controlId="formRecipeBpjsIteration">
+                  <Form.Label>Iterasi </Form.Label>
+                  <Form.Check
+                    type="checkbox"
+                    name="iteration"
+                    checked={newRecipe.iteration}
+                    onChange={handleInputChange}
+                    autoComplete="off"
+                  />
+                </Form.Group>
+              </Col>
             </Row>
 
             {newRecipe.recipe_type === "BPJS" && (
@@ -298,20 +345,6 @@ const AddRecipePage: React.FC = () => {
                       placeholder="Masukkan BPJS SEP"
                       name="bpjs_sep"
                       value={newRecipe.bpjs_sep}
-                      onChange={handleInputChange}
-                      autoComplete="off"
-                      required
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group controlId="formRecipeBpjsIteration">
-                    <Form.Label>Iterasi BPJS</Form.Label>
-                    <Form.Check
-                      type="checkbox"
-                      placeholder="Masukkan iterasi BPJS"
-                      name="bpjs_iteration"
-                      checked={newRecipe.bpjs_iteration}
                       onChange={handleInputChange}
                       autoComplete="off"
                       required
