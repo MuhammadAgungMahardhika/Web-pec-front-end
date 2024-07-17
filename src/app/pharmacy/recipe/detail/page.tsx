@@ -17,25 +17,31 @@ import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
 
 interface Recipe {
   id: number;
-  no_of_receipt: string;
-  id_patient: string;
   id_poli: string;
+  id_patient: string;
   id_doctor: string;
+  no_of_receipt: string;
   date: string;
   date_of_service: string;
   kind_of_medicine: string;
 }
-
+interface Product {
+  id: number;
+  name: string;
+  price: number;
+}
+interface Signa {
+  id: number;
+  name: string;
+}
 interface RecipeDetail {
   id: number;
-  id_product: number;
-  product_name: string;
-  signa_name: string;
-  id_signa: number;
   id_order: number;
+  product: Product;
+  signa: Signa;
   quantity: number;
   price: number;
-  dosis?: number;
+  dosis?: string;
   note?: string;
   note2?: string;
 }
@@ -81,14 +87,8 @@ const DetailRecipe: React.FC = () => {
           const successResponse = await response.json();
           const data = successResponse.data;
           console.log(data);
-          const modifiedData = data.map((detail: any) => ({
-            ...detail,
-            product_name: detail.products.name,
-            product_code: detail.products.code,
-            product_price: detail.products.price,
-            signa_name: detail.signas.name,
-          }));
-          setRecipeDetails(modifiedData);
+
+          setRecipeDetails(data);
         } else {
           throw new Error("Gagal mendapatkan detail resep");
         }
@@ -118,7 +118,6 @@ const DetailRecipe: React.FC = () => {
         },
         body: JSON.stringify(currentDetail),
       });
-      console.log(currentDetail);
 
       if (response.ok) {
         const updatedDetail = await response.json();
@@ -176,19 +175,25 @@ const DetailRecipe: React.FC = () => {
 
   const handleOpenModal = (detail?: RecipeDetail) => {
     if (detail) {
+      console.log(detail);
       setCurrentDetail(detail);
       setIsEditMode(true);
     } else {
       setCurrentDetail({
         id: 0,
-        product_name: "",
-        id_product: 0,
-        signa_name: "",
-        id_signa: 0,
+        product: {
+          id: 0,
+          name: "",
+          price: 0,
+        },
+        signa: {
+          id: 0,
+          name: "",
+        },
         id_order: parseInt(recipeId as string, 10),
-        quantity: 0,
+        quantity: 1,
         price: 0,
-        dosis: undefined,
+        dosis: "",
         note: "",
         note2: "",
       });
@@ -257,10 +262,7 @@ const DetailRecipe: React.FC = () => {
     [pharmacyServiceUrl]
   );
 
-  const handleSelectChange = (
-    selectedOption: SelectOption | null,
-    action: any
-  ) => {
+  const handleSelectChange = (selectedOption: any, action: any) => {
     console.log(selectedOption);
     console.log(action);
     if (currentDetail && action.name) {
@@ -303,6 +305,7 @@ const DetailRecipe: React.FC = () => {
                 <th>Signa</th>
                 <th>Jumlah</th>
                 <th>Harga</th>
+                <th>Total harga</th>
                 <th>Aksi</th>
               </tr>
             </thead>
@@ -310,10 +313,11 @@ const DetailRecipe: React.FC = () => {
               {recipeDetails.map((detail, index) => (
                 <tr key={detail.id}>
                   <td>{index + 1}</td>
-                  <td>{detail.product_name}</td>
-                  <td>{detail.signa_name}</td>
+                  <td>{detail.product.name}</td>
+                  <td>{detail.signa.name}</td>
                   <td>{detail.quantity}</td>
-                  <td>{detail.price}</td>
+                  <td>{detail.product.price}</td>
+                  <td>{detail.quantity * detail.product.price}</td>
                   <td>
                     <Button
                       variant="info"
@@ -339,29 +343,44 @@ const DetailRecipe: React.FC = () => {
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              <Form>
-                <Form.Group controlId="product" className="mb-2">
-                  <Form.Label>Produk</Form.Label>
-                  <AsyncSelect
-                    cacheOptions
-                    defaultOptions
-                    onChange={handleSelectChange}
-                    loadOptions={loadProductOptions}
-                    name="id_product"
-                  />
-                </Form.Group>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveDetail();
+                }}>
                 <Stack direction="horizontal" gap={3} className="mb-2">
-                  <Form.Group controlId="signa">
+                  <Form.Group controlId="product" style={{ flex: 1 }}>
+                    <Form.Label>Produk</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      defaultValue={{
+                        value: currentDetail?.product.id,
+                        label: currentDetail?.product.name,
+                      }}
+                      onChange={handleSelectChange}
+                      loadOptions={loadProductOptions}
+                      name="id_product"
+                    />
+                  </Form.Group>
+                  <Form.Group controlId="signa" style={{ flex: 1 }}>
                     <Form.Label>Signa</Form.Label>
                     <AsyncSelect
                       cacheOptions
                       defaultOptions
+                      defaultValue={{
+                        value: currentDetail?.signa.id,
+                        label: currentDetail?.signa.name,
+                      }}
                       onChange={handleSelectChange}
                       loadOptions={loadSignaOptions}
                       name="id_signa"
                     />
                   </Form.Group>
-                  <Form.Group controlId="quantity">
+                </Stack>
+
+                <Stack direction="horizontal" gap={3} className="mb-2">
+                  <Form.Group controlId="quantity" style={{ flex: 1 }}>
                     <Form.Label>Jumlah</Form.Label>
                     <Form.Control
                       type="number"
@@ -370,19 +389,19 @@ const DetailRecipe: React.FC = () => {
                       onChange={handleChange}
                     />
                   </Form.Group>
+                  <Form.Group controlId="dosis" style={{ flex: 1 }}>
+                    <Form.Label>Dosis</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="dosis"
+                      value={currentDetail?.dosis || ""}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
                 </Stack>
 
-                <Form.Group controlId="dosis" className="mb-2">
-                  <Form.Label>Dosis</Form.Label>
-                  <Form.Control
-                    type="number"
-                    name="dosis"
-                    value={currentDetail?.dosis || ""}
-                    onChange={handleChange}
-                  />
-                </Form.Group>
                 <Stack direction="horizontal" gap={3} className="mb-2">
-                  <Form.Group controlId="note">
+                  <Form.Group controlId="note" style={{ flex: 1 }}>
                     <Form.Label>Catatan</Form.Label>
                     <Form.Control
                       type="text"
@@ -391,7 +410,7 @@ const DetailRecipe: React.FC = () => {
                       onChange={handleChange}
                     />
                   </Form.Group>
-                  <Form.Group controlId="note2">
+                  <Form.Group controlId="note2" style={{ flex: 1 }}>
                     <Form.Label>Catatan Tambahan</Form.Label>
                     <Form.Control
                       type="text"
