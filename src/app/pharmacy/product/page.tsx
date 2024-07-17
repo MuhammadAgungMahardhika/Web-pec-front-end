@@ -349,13 +349,14 @@ const ProductPage: React.FC = () => {
                 <th>Kode</th>
                 <th>Nama</th>
                 <th>Deskripsi</th>
-                <th>Harga</th>
-                <th>Jumlah Stok</th>
+                <th className="text-end">Harga</th>
+                <th className="text-end">Stok</th>
                 <th>Kedaluwarsa</th>
                 <th>Pembatasan</th>
+                <th>Generik</th>
                 <th>BPJS PRB</th>
                 <th>Kronis</th>
-                <th>Generik</th>
+
                 <th className="text-center">Aksi</th>
               </tr>
             </thead>
@@ -374,9 +375,9 @@ const ProductPage: React.FC = () => {
                   <td className="text-end">{product.stock_quantity}</td>
                   <td>{product.expired}</td>
                   <td>{product.restriction}</td>
+                  <td>{product.generic}</td>
                   <td>{product.bpjs_prb ? "Ya" : "Tidak"}</td>
                   <td>{product.chronic ? "Ya" : "Tidak"}</td>
-                  <td>{product.generic}</td>
                   <td>
                     <Stack direction="horizontal" gap={2}>
                       <Button

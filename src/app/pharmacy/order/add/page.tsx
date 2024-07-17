@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import {
   Row,
   Col,
-  Image,
   Stack,
   Breadcrumb,
   Form,
@@ -12,11 +11,12 @@ import {
   FormControl,
 } from "react-bootstrap";
 import AsyncSelect from "react-select/async";
-import { SuccessAlert, FailedAlert } from "@/app/components/alert/alert";
+import { FailedAlert } from "@/app/components/alert/alert";
 import Link from "next/link";
 import { FailedToast } from "@/app/components/toast/toast";
-
-interface Recipe {
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faSave } from "@fortawesome/free-solid-svg-icons";
+interface Order {
   id_patient: string;
   id_poli: number;
   id_doctor: string;
@@ -24,68 +24,64 @@ interface Recipe {
   date: string;
   date_of_service: string;
   kind_of_medicine: number;
-  total_amount: number;
-  status: string;
   bpjs_sep: string;
   iteration: boolean;
-  recipe_type: string;
+  order_type: string;
 }
 
 const getCurrentDate = () => {
   return new Date().toISOString().split("T")[0];
 };
 
-const AddRecipePage: React.FC = () => {
+const AddOrderPage: React.FC = () => {
   const pharmacyServiceUrl = "http://127.0.0.1:8082/api";
   const router = useRouter();
 
-  const [newRecipe, setNewRecipe] = useState<Recipe>({
+  const [newOrder, setNewOrder] = useState<Order>({
     id_patient: "",
-    id_poli: 2,
+    id_poli: 1,
     id_doctor: "",
     no_of_receipt: "",
     date: getCurrentDate(),
     date_of_service: getCurrentDate(),
     kind_of_medicine: 0,
-    total_amount: 50000,
-    status: "pending",
     iteration: false,
     bpjs_sep: "",
-    recipe_type: "Umum",
+    order_type: "Umum",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
-    setNewRecipe({
-      ...newRecipe,
+    setNewOrder({
+      ...newOrder,
       [name]: type === "checkbox" ? checked : value,
     });
   };
 
   const handleChange = (e: any) => {
     const { name, value } = e.target;
-    setNewRecipe({ ...newRecipe, [name]: parseInt(value, 10) });
+    setNewOrder({ ...newOrder, [name]: parseInt(value, 10) });
   };
 
   const handleSelectChange = (selectedOption: any | null, action: any) => {
-    if (newRecipe && action.name) {
-      setNewRecipe({
-        ...newRecipe,
+    if (newOrder && action.name) {
+      setNewOrder({
+        ...newOrder,
         [action.name]: selectedOption ? selectedOption.value : null,
       });
     }
   };
 
-  const handleRecipeTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleOrderTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { value } = e.target;
-    setNewRecipe({
-      ...newRecipe,
-      recipe_type: value,
-      bpjs_sep: value === "BPJS" ? newRecipe.bpjs_sep : "",
+    setNewOrder({
+      ...newOrder,
+      order_type: value,
+      bpjs_sep: value === "BPJS" ? newOrder.bpjs_sep : "",
     });
   };
 
-  const handleAddRecipe = async (e: any) => {
+  const handleAddOrder = async (e: any) => {
     e.preventDefault();
 
     try {
@@ -94,7 +90,7 @@ const AddRecipePage: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(newRecipe),
+        body: JSON.stringify(newOrder),
       });
 
       if (!response.ok) {
@@ -105,10 +101,10 @@ const AddRecipePage: React.FC = () => {
 
       const data: any = await response.json();
 
-      router.push(`/pharmacy/recipe/detail?id=${data.data.id}`);
+      router.push(`/pharmacy/order/detail?id=${data.data.id}`);
     } catch (error: any) {
       console.error(error);
-      FailedAlert(`Failed to add recipe:${error.message}`);
+      FailedAlert(`Failed to add order:${error.message}`);
     }
   };
 
@@ -124,7 +120,7 @@ const AddRecipePage: React.FC = () => {
         const successResponse = await response.json();
         const options = successResponse.data.map((patient: any) => ({
           value: patient.no_mr,
-          label: patient.no_mr,
+          label: patient.no_mr + " | " + patient.name,
         }));
 
         return options;
@@ -137,60 +133,103 @@ const AddRecipePage: React.FC = () => {
     [pharmacyServiceUrl]
   );
 
+  const loadPoliOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${pharmacyServiceUrl}/outpatient-clinic?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((outpatientClinic: any) => ({
+          value: outpatientClinic.id,
+          label: outpatientClinic.name,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load outpatientClinic:", error);
+        FailedToast("Failed to load outpatientClinic:" + error.message);
+        return [];
+      }
+    },
+    [pharmacyServiceUrl]
+  );
+
+  const loadDoctorOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${pharmacyServiceUrl}/doctor?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((doctor: any) => ({
+          value: doctor.code,
+          label: doctor.name,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load doctor:", error);
+        FailedToast("Failed to load doctor:" + error.message);
+        return [];
+      }
+    },
+    [pharmacyServiceUrl]
+  );
+
   return (
     <div className="container mt-4">
       <Breadcrumb>
-        <Breadcrumb.Item linkAs={Link} href="/pharmacy/recipe">
-          Resep Obat
+        <Breadcrumb.Item linkAs={Link} href="/pharmacy/order">
+          Daftar Permintaan Obat
         </Breadcrumb.Item>
-        <Breadcrumb.Item active>Tambah Resep Baru</Breadcrumb.Item>
+        <Breadcrumb.Item active>Tambah Permintaan Obat</Breadcrumb.Item>
       </Breadcrumb>
 
       <div className="card">
         <div className="card-header">
-          <h3>Tambah Resep Baru</h3>
+          <h3>Tambah Permintaan Obat</h3>
         </div>
         <div className="card-body">
-          <Form onSubmit={handleAddRecipe}>
-            <Row className="mb-2">
+          <Form onSubmit={handleAddOrder}>
+            <Row className="mb-3">
               <Col>
-                <Form.Group controlId="formRecipeType">
-                  <Form.Label>Jaminan</Form.Label>
-                  <Stack direction="horizontal" gap={2}>
+                <Stack direction="horizontal" gap={2}>
+                  <Form.Group controlId="formOrderUmum">
                     <Form.Check
                       type="radio"
-                      label={
-                        <Stack direction="horizontal" gap={2}>
-                          <Image
-                            src="/assets/images/logo/logo_pec.svg"
-                            width={40}
-                            height={40}
-                            alt="Umum"
-                          />
-                          <span>Umum</span>
-                        </Stack>
-                      }
-                      name="recipe_type"
+                      name="order_type"
                       value="Umum"
-                      checked={newRecipe.recipe_type === "Umum"}
-                      onChange={handleRecipeTypeChange}
+                      checked={newOrder.order_type === "Umum"}
+                      onChange={handleOrderTypeChange}
+                      inline
                     />
+                    <Form.Label className="me-2">Umum</Form.Label>
+                  </Form.Group>
+                  <Form.Group controlId="formOrderBpjs">
                     <Form.Check
                       type="radio"
-                      label="BPJS"
-                      name="recipe_type"
+                      name="order_type"
                       value="BPJS"
-                      checked={newRecipe.recipe_type === "BPJS"}
-                      onChange={handleRecipeTypeChange}
+                      checked={newOrder.order_type === "BPJS"}
+                      onChange={handleOrderTypeChange}
+                      inline
                     />
-                  </Stack>
-                </Form.Group>
+                    <Form.Label className="me-2">Bpjs</Form.Label>
+                  </Form.Group>
+                </Stack>
               </Col>
             </Row>
 
-            <Row className="mb-2">
+            <Row className="mb-3">
               <Col>
-                <Form.Group controlId="formNoRecipe">
+                <Form.Group controlId="formNoOrder">
                   <Form.Label>
                     Nomor <span className="text-danger"> * </span>
                   </Form.Label>
@@ -198,7 +237,9 @@ const AddRecipePage: React.FC = () => {
                     type="text"
                     name="no_of_receipt"
                     onChange={handleInputChange}
-                    value={newRecipe.no_of_receipt}
+                    value={newOrder.no_of_receipt}
+                    autoComplete="off"
+                    required
                   />
                 </Form.Group>
               </Col>
@@ -208,16 +249,13 @@ const AddRecipePage: React.FC = () => {
                     Poli
                     <span className="text-danger"> * </span>
                   </Form.Label>
-                  <FormControl
-                    as={"select"}
-                    type="number"
+                  <AsyncSelect
+                    cacheOptions
+                    defaultOptions
+                    onChange={handleSelectChange}
+                    loadOptions={loadPoliOption}
                     name="id_poli"
-                    onChange={handleChange}
-                    value={newRecipe.id_poli}>
-                    <option value="1">Poli 1</option>
-                    <option value="2">Poli 2</option>
-                    <option value="3">Poli 3</option>
-                  </FormControl>
+                  />
                 </Form.Group>
               </Col>
               <Col>
@@ -243,11 +281,13 @@ const AddRecipePage: React.FC = () => {
                     cacheOptions
                     defaultOptions
                     onChange={handleSelectChange}
-                    loadOptions={loadNoMrOption}
+                    loadOptions={loadDoctorOption}
                     name="id_doctor"
                   />
                 </Form.Group>
               </Col>
+            </Row>
+            <Row className="mb-3">
               <Col>
                 <Form.Group controlId="formDate">
                   <Form.Label>
@@ -256,7 +296,7 @@ const AddRecipePage: React.FC = () => {
                   <Form.Control
                     type="date"
                     name="date"
-                    value={newRecipe.date || getCurrentDate()}
+                    value={newOrder.date || getCurrentDate()}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
@@ -269,20 +309,20 @@ const AddRecipePage: React.FC = () => {
                   <Form.Control
                     type="date"
                     name="date_of_service"
-                    value={newRecipe.date_of_service || getCurrentDate()}
+                    value={newOrder.date_of_service || getCurrentDate()}
                     onChange={handleInputChange}
                   />
                 </Form.Group>
               </Col>
-            </Row>
-            <Row className="mb-2">
               <Col>
-                <Form.Group controlId="formRecipeMedicineType">
-                  <Form.Label>Jenis Obat</Form.Label>
+                <Form.Group controlId="formOrderMedicineType">
+                  <Form.Label>
+                    Jenis Obat <span className="text-danger">*</span>
+                  </Form.Label>
                   <Form.Control
                     as="select"
                     name="kind_of_medicine"
-                    value={newRecipe.kind_of_medicine}
+                    value={newOrder.kind_of_medicine}
                     onChange={handleChange}
                     autoComplete="off"
                     required>
@@ -294,57 +334,30 @@ const AddRecipePage: React.FC = () => {
                 </Form.Group>
               </Col>
               <Col>
-                <Form.Group controlId="formRecipeTotalAmount">
-                  <Form.Label>Jumlah Total</Form.Label>
-                  <Form.Control
-                    type="number"
-                    placeholder="Masukkan jumlah total"
-                    name="total_amount"
-                    value={newRecipe.total_amount}
-                    onChange={handleInputChange}
-                    autoComplete="off"
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group controlId="formRecipeStatus">
-                  <Form.Label>Status</Form.Label>
-                  <Form.Control
-                    type="text"
-                    placeholder="Masukkan status"
-                    name="status"
-                    value={newRecipe.status}
-                    onChange={handleInputChange}
-                    autoComplete="off"
-                    required
-                  />
-                </Form.Group>
-              </Col>
-              <Col>
-                <Form.Group controlId="formRecipeBpjsIteration">
-                  <Form.Label>Iterasi </Form.Label>
+                <Form.Group controlId="formOrderBpjsIteration">
+                  <Form.Label>Resep lanjutan? </Form.Label>
                   <Form.Check
                     type="checkbox"
                     name="iteration"
-                    checked={newRecipe.iteration}
+                    checked={newOrder.iteration}
                     onChange={handleInputChange}
                     autoComplete="off"
+                    className="mt-2"
                   />
                 </Form.Group>
               </Col>
             </Row>
 
-            {newRecipe.recipe_type === "BPJS" && (
+            {newOrder.order_type === "BPJS" && (
               <Row className="mb-2">
                 <Col>
-                  <Form.Group controlId="formRecipeBpjsSep">
+                  <Form.Group controlId="formOrderBpjsSep">
                     <Form.Label>BPJS SEP</Form.Label>
                     <Form.Control
                       type="text"
                       placeholder="Masukkan BPJS SEP"
                       name="bpjs_sep"
-                      value={newRecipe.bpjs_sep}
+                      value={newOrder.bpjs_sep}
                       onChange={handleInputChange}
                       autoComplete="off"
                       required
@@ -354,9 +367,19 @@ const AddRecipePage: React.FC = () => {
               </Row>
             )}
 
-            <Button type="submit" variant="primary" className="mt-4">
-              Simpan
-            </Button>
+            <Row>
+              <Col className="text-end">
+                <Button
+                  type="submit"
+                  variant="primary"
+                  className="mt-4"
+                  aria-label="simpan resep"
+                  title="simpan resep">
+                  <FontAwesomeIcon icon={faSave} size="2x" className="me-2" />
+                  Simpan
+                </Button>
+              </Col>
+            </Row>
           </Form>
         </div>
       </div>
@@ -364,4 +387,4 @@ const AddRecipePage: React.FC = () => {
   );
 };
 
-export default AddRecipePage;
+export default AddOrderPage;

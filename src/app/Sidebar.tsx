@@ -34,9 +34,9 @@ const menues: menu[] = [
         link: "/",
       },
       {
-        name: "Buat resep",
+        name: "Permintaan Obat",
         icon: "bi bi-grid-fill",
-        link: "/pharmacy/recipe",
+        link: "/pharmacy/order",
       },
       {
         name: "Master",

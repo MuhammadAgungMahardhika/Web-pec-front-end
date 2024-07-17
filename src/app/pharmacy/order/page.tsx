@@ -13,8 +13,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
 
-// Interface untuk resep (Recipe)
-interface Recipe {
+// Interface untuk  (Order)
+interface Order {
   id: number;
   no_of_receipt: string;
   id_patient: string;
@@ -25,12 +25,11 @@ interface Recipe {
   kind_of_medicine: string;
 }
 
-const RecipePage: React.FC = () => {
-  // URL service untuk resep
-  const recipeServiceUrl = "http://localhost:8082/api";
+const MedicationRequestFormPage: React.FC = () => {
+  // URL service untuk farmasi
+  const orderServiceUrl = "http://localhost:8082/api";
 
-  // State untuk daftar resep, resep saat ini yang sedang diubah/hapus, dan modal
-  const [recipes, setRecipes] = useState<Recipe[]>([]);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [pagination, setPagination] = useState<{
     pageIndex: number;
     pageSize: number;
@@ -41,33 +40,33 @@ const RecipePage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState<string>("");
   // State untuk modal delete
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [recipeToDelete, setRecipeToDelete] = useState<Recipe | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<Order | null>(null);
 
   // Mengambil daftar resep dari server
   useEffect(() => {
-    const fetchRecipes = async () => {
+    const fetchOrders = async () => {
       try {
         const response = await fetch(
-          `${recipeServiceUrl}/order?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
+          `${orderServiceUrl}/order?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
         if (response.ok) {
           const data = await response.json();
-          setRecipes(data.data);
+          setOrders(data.data);
         } else {
-          console.error("Failed to fetch recipes:", response.statusText);
+          console.error("Failed to fetch orders:", response.statusText);
         }
       } catch (error) {
-        console.error("Failed to fetch recipes:", error);
+        console.error("Failed to fetch orders:", error);
       }
     };
 
-    fetchRecipes();
+    fetchOrders();
   }, [pagination, searchQuery]);
 
   // Menghapus resep dari daftar
-  const handleDeleteRecipe = async (recipe: Recipe) => {
+  const handleDeleteOrder = async (order: Order) => {
     try {
-      const response = await fetch(`${recipeServiceUrl}/order/${recipe.id}`, {
+      const response = await fetch(`${orderServiceUrl}/order/${order.id}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -75,16 +74,14 @@ const RecipePage: React.FC = () => {
       });
 
       if (response.ok) {
-        setRecipes((prevRecipes) =>
-          prevRecipes.filter((r) => r.id !== recipe.id)
-        );
+        setOrders((prevOrders) => prevOrders.filter((r) => r.id !== order.id));
       } else {
-        console.error("Failed to delete recipe:", response.statusText);
-        alert("Failed to delete recipe. Please try again.");
+        console.error("Failed to delete order:", response.statusText);
+        alert("Failed to delete order. Please try again.");
       }
     } catch (error) {
-      console.error("Failed to delete recipe:", error);
-      alert("Failed to delete recipe. An error occurred.");
+      console.error("Failed to delete order:", error);
+      alert("Failed to delete order. An error occurred.");
     }
   };
 
@@ -107,11 +104,11 @@ const RecipePage: React.FC = () => {
     <div className="container mt-4">
       <div className="card">
         <div className="card-header">
-          <h3>Daftar Resep</h3>
+          <h3>Daftar Permintaan Obat</h3>
         </div>
         <div className="card-body">
           <Stack direction="horizontal" gap={2} className="mb-3">
-            <Link href="/pharmacy/recipe/add" passHref>
+            <Link href="/pharmacy/order/add" passHref>
               <Button variant="primary">
                 <FontAwesomeIcon icon={faPlus} />
               </Button>
@@ -137,27 +134,19 @@ const RecipePage: React.FC = () => {
               </tr>
             </thead>
             <tbody>
-              {recipes.map((recipe, index) => (
-                <tr key={recipe.id}>
+              {orders.map((order, index) => (
+                <tr key={order.id}>
                   <td>{index + 1}</td>
-                  <td>{recipe.no_of_receipt}</td>
-                  <td>{recipe.id_patient}</td>
-                  <td>{recipe.id_poli}</td>
-                  <td>{recipe.date}</td>
+                  <td>{order.no_of_receipt}</td>
+                  <td>{order.id_patient}</td>
+                  <td>{order.id_poli}</td>
+                  <td>{order.date}</td>
                   <td>
                     <Link
-                      href={`/pharmacy/recipe/detail?id=${recipe.id}`}
-                      passHref>
-                      <Button variant="outline-light" className="me-2 btn-sm">
-                        <FontAwesomeIcon icon={faInfo} size="xs" />
-                      </Button>
-                    </Link>
-
-                    <Link
-                      href={`/pharmacy/recipe/edit?id=${recipe.id}`}
+                      href={`/pharmacy/order/detail?id=${order.id}`}
                       passHref>
                       <Button variant="primary" className="me-2 btn-sm">
-                        <FontAwesomeIcon icon={faEdit} size="xs" />
+                        <FontAwesomeIcon icon={faInfo} size="xs" />
                       </Button>
                     </Link>
 
@@ -165,7 +154,7 @@ const RecipePage: React.FC = () => {
                       variant="danger"
                       className="btn-sm"
                       onClick={() => {
-                        setRecipeToDelete(recipe);
+                        setOrderToDelete(order);
                         setShowDeleteModal(true);
                       }}>
                       <FontAwesomeIcon icon={faTrash} size="xs" />
@@ -192,7 +181,7 @@ const RecipePage: React.FC = () => {
               {"Sebelumnya"}
             </Button>
             <Button
-              disabled={recipes.length < pagination.pageSize}
+              disabled={orders.length < pagination.pageSize}
               onClick={() => handlePageChange(pagination.pageIndex + 1)}
               className="me-2">
               {"Selanjutnya"}
@@ -225,7 +214,7 @@ const RecipePage: React.FC = () => {
           <Button
             variant="danger"
             onClick={() => {
-              handleDeleteRecipe(recipeToDelete!);
+              handleDeleteOrder(orderToDelete!);
               setShowDeleteModal(false);
             }}>
             Hapus
@@ -236,4 +225,4 @@ const RecipePage: React.FC = () => {
   );
 };
 
-export default RecipePage;
+export default MedicationRequestFormPage;

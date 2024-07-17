@@ -1,14 +1,15 @@
 "use client";
 import { useSearchParams } from "next/navigation";
-import { useState, useEffect, ChangeEvent, useCallback, useMemo } from "react";
+import { useState, useEffect, ChangeEvent, useCallback, useRef } from "react";
 import {
+  Row,
+  Col,
   Stack,
   Breadcrumb,
   Modal,
   Button,
   Table,
   Form,
-  Container,
 } from "react-bootstrap";
 import Link from "next/link";
 import AsyncSelect from "react-select/async";
@@ -17,14 +18,30 @@ import {
   faEdit,
   faPlus,
   faPrint,
+  faSave,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-
-interface Recipe {
+import ReactToPrint from "react-to-print";
+import { FailedToast } from "@/app/components/toast/toast";
+interface Poli {
   id: number;
-  id_poli: string;
-  id_patient: string;
-  id_doctor: string;
+  name: string;
+}
+
+interface Patient {
+  no_mr: string;
+  name: string;
+}
+
+interface Doctor {
+  code: string;
+  name: string;
+}
+interface Order {
+  id: number;
+  poli: Poli;
+  patient: Patient;
+  doctor: Doctor;
   no_of_receipt: string;
   date: string;
   date_of_service: string;
@@ -39,13 +56,12 @@ interface Signa {
   id: number;
   name: string;
 }
-interface RecipeDetail {
+interface OrderDetail {
   id: number;
   id_order: number;
   product: Product;
   signa: Signa;
   quantity: number;
-  price: number;
   dosis?: string;
   note?: string;
   note2?: string;
@@ -56,25 +72,26 @@ interface SelectOption {
   value: number;
 }
 
-const DetailRecipe: React.FC = () => {
+const DetailOrder: React.FC = () => {
   const pharmacyServiceUrl = "http://127.0.0.1:8082/api";
   const searchParams = useSearchParams();
-  const recipeId = searchParams.get("id");
-  const [recipeInfo, setRecipeInfo] = useState<Recipe | null>(null);
-  const [recipeDetails, setRecipeDetails] = useState<RecipeDetail[]>([]);
-  const [currentDetail, setCurrentDetail] = useState<RecipeDetail | null>(null);
+  const orderId = searchParams.get("id");
+  const [order, setOrder] = useState<Order | null>(null);
+  const [orderDetails, setOrderDetails] = useState<OrderDetail[]>([]);
+  const [currentDetail, setCurrentDetail] = useState<OrderDetail | null>(null);
   const [showModal, setShowModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
+  const componentRef = useRef(null);
 
   useEffect(() => {
-    const fetchRecipeInfo = async () => {
+    const fetchOrder = async () => {
       try {
-        const response = await fetch(`${pharmacyServiceUrl}/order/${recipeId}`);
+        const response = await fetch(`${pharmacyServiceUrl}/order/${orderId}`);
         if (response.ok) {
           const successResponse = await response.json();
           const data = successResponse.data;
-          setRecipeInfo(data);
+          setOrder(data);
         } else {
           throw new Error("Gagal mendapatkan informasi resep");
         }
@@ -83,17 +100,17 @@ const DetailRecipe: React.FC = () => {
       }
     };
 
-    const fetchRecipeDetails = async () => {
+    const fetchOrderDetails = async () => {
       try {
         const response = await fetch(
-          `${pharmacyServiceUrl}/detail-order/order-id/${recipeId}`
+          `${pharmacyServiceUrl}/detail-order/order-id/${orderId}`
         );
         if (response.ok) {
           const successResponse = await response.json();
           const data = successResponse.data;
           console.log(data);
 
-          setRecipeDetails(data);
+          setOrderDetails(data);
         } else {
           throw new Error("Gagal mendapatkan detail resep");
         }
@@ -102,11 +119,11 @@ const DetailRecipe: React.FC = () => {
       }
     };
 
-    if (recipeId) {
-      fetchRecipeInfo();
-      fetchRecipeDetails();
+    if (orderId) {
+      fetchOrder();
+      fetchOrderDetails();
     }
-  }, [recipeId]);
+  }, [orderId]);
 
   const handleSaveDetail = async () => {
     if (!currentDetail) return;
@@ -128,13 +145,13 @@ const DetailRecipe: React.FC = () => {
         const updatedDetail = await response.json();
         console.log(updatedDetail);
         if (isEditMode) {
-          setRecipeDetails((prev) =>
+          setOrderDetails((prev) =>
             prev.map((detail) =>
               detail.id === currentDetail.id ? updatedDetail.data : detail
             )
           );
         } else {
-          setRecipeDetails((prev) => [updatedDetail.data, ...prev]);
+          setOrderDetails((prev) => [updatedDetail.data, ...prev]);
         }
         setShowModal(false);
         setCurrentDetail(null);
@@ -145,7 +162,7 @@ const DetailRecipe: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
-      alert("Gagal menyimpan detail resep. Terjadi kesalahan.");
+      FailedToast("Gagal menyimpan detail resep. Terjadi kesalahan.");
     }
   };
 
@@ -163,22 +180,22 @@ const DetailRecipe: React.FC = () => {
       );
 
       if (response.ok) {
-        setRecipeDetails((prev) =>
+        setOrderDetails((prev) =>
           prev.filter((detail) => detail.id !== currentDetail.id)
         );
         setShowDeleteModal(false);
         setCurrentDetail(null);
       } else {
         console.error("Gagal menghapus detail resep:", response.statusText);
-        alert("Gagal menghapus detail resep. Coba lagi.");
+        FailedToast("Gagal menghapus detail resep. Coba lagi.");
       }
     } catch (error) {
       console.error("Gagal menghapus detail resep:", error);
-      alert("Gagal menghapus detail resep. Terjadi kesalahan.");
+      FailedToast("Gagal menghapus detail resep. Terjadi kesalahan.");
     }
   };
 
-  const handleOpenModal = (detail?: RecipeDetail) => {
+  const handleOpenModal = (detail?: OrderDetail) => {
     if (detail) {
       console.log(detail);
       setCurrentDetail(detail);
@@ -195,9 +212,8 @@ const DetailRecipe: React.FC = () => {
           id: 0,
           name: "",
         },
-        id_order: parseInt(recipeId as string, 10),
+        id_order: parseInt(orderId as string, 10),
         quantity: 1,
-        price: 0,
         dosis: "",
         note: "",
         note2: "",
@@ -207,7 +223,7 @@ const DetailRecipe: React.FC = () => {
     setShowModal(true);
   };
 
-  const handleOpenDeleteModal = (detail: RecipeDetail) => {
+  const handleOpenDeleteModal = (detail: OrderDetail) => {
     setCurrentDetail(detail);
     setShowDeleteModal(true);
   };
@@ -241,7 +257,7 @@ const DetailRecipe: React.FC = () => {
           label: product.name,
         }));
       } catch (error) {
-        console.error("Error fetching product options:", error);
+        console.error("Gagal mendapatkan produk:", error);
         return [];
       }
     },
@@ -260,7 +276,7 @@ const DetailRecipe: React.FC = () => {
           label: signa.name,
         }));
       } catch (error) {
-        console.error("Error fetching signa options:", error);
+        console.error("Gagal mendapatkan signa:", error);
         return [];
       }
     },
@@ -277,67 +293,206 @@ const DetailRecipe: React.FC = () => {
       });
     }
   };
-  const totalJumlahHarga = recipeDetails.reduce(
+  const totalJumlahHarga = orderDetails.reduce(
     (total, detail) => total + detail.quantity * detail.product.price,
     0
   );
   return (
-    <div className="container mt-4">
+    <div className="container">
       <Breadcrumb>
-        <Breadcrumb.Item linkAs={Link} href="/pharmacy/recipe">
-          Resep Obat
+        <Breadcrumb.Item linkAs={Link} href="/pharmacy/order">
+          Daftar Permintaan Obat
         </Breadcrumb.Item>
-        <Breadcrumb.Item active>Detail Resep</Breadcrumb.Item>
+        <Breadcrumb.Item active>Detail Permintaan Obat</Breadcrumb.Item>
       </Breadcrumb>
 
       <div className="card">
         <div className="card-header">
-          <h3>Detail Resep</h3>
+          <h3>Detail Permintaan Obat</h3>
         </div>
         <div className="card-body">
-          {recipeInfo && (
-            <div>
-              <p>Nomor Resep: {recipeInfo.no_of_receipt}</p>
-              <p>Tanggal: {recipeInfo.date}</p>
-              <p>Jenis Obat: {recipeInfo.kind_of_medicine}</p>
-            </div>
+          {order && (
+            <Form className="border mb-2 p-2">
+              <Row className="mb-3">
+                <Col>
+                  <Form.Group controlId="formNoOrder">
+                    <Form.Label>
+                      Nomor <span className="text-danger"> * </span>
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="no_of_receipt"
+                      // onChange={handleInputChange}
+                      value={order.no_of_receipt}
+                      disabled
+                      autoComplete="off"
+                      required
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formPoli">
+                    <Form.Label>
+                      Poli
+                      <span className="text-danger"> * </span>
+                    </Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      // onChange={handleSelectChange}
+                      // loadOptions={loadPoliOption}
+                      name="id_poli"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formNoMrPatient">
+                    <Form.Label>
+                      Pasien <span className="text-danger"> * </span>
+                    </Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      isDisabled
+                      // onChange={handleSelectChange}
+                      // loadOptions={loadNoMrOption}
+                      name="id_patient"
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formDoctorCode">
+                    <Form.Label>
+                      Dokter <span className="text-danger"> * </span>
+                    </Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      // onChange={handleSelectChange}
+                      // loadOptions={loadDoctorOption}
+                      name="id_doctor"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col>
+                  <Form.Group controlId="formDate">
+                    <Form.Label>
+                      Tanggal Resep <span className="text-danger"> * </span>
+                    </Form.Label>
+                    <Form.Control
+                      type="date"
+                      name="date"
+                      value={order.date}
+                      // onChange={handleInputChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formDateOfService">
+                    <Form.Label>
+                      Tanggal Dilayani <span className="text-danger"> * </span>
+                    </Form.Label>
+                    <Form.Control
+                      type="date"
+                      name="date_of_service"
+                      value={order.date_of_service}
+                      // onChange={handleInputChange}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formOrderMedicineType">
+                    <Form.Label>
+                      Jenis Obat <span className="text-danger">*</span>
+                    </Form.Label>
+                    <Form.Control
+                      as="select"
+                      name="kind_of_medicine"
+                      value={order.kind_of_medicine}
+                      onChange={handleChange}
+                      autoComplete="off"
+                      required>
+                      <option value="">Pilih jenis obat</option>
+                      <option value={1}>Obat PRB</option>
+                      <option value={2}>Obat Kronis Blm Stabil</option>
+                      <option value={3}>Obat Kemoterapi</option>
+                    </Form.Control>
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formOrderBpjsIteration">
+                    <Form.Label>Resep lanjutan? </Form.Label>
+                    <Form.Check
+                      type="checkbox"
+                      name="iteration"
+                      // checked={order.iteration}
+                      // onChange={handleInputChange}
+                      autoComplete="off"
+                      className="mt-2"
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+
+              <Row>
+                <Col className="text-end">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    className="mt-4"
+                    aria-label="simpan resep"
+                    title="simpan resep">
+                    <FontAwesomeIcon icon={faSave} size="2x" className="me-2" />
+                    Simpan
+                  </Button>
+                </Col>
+              </Row>
+            </Form>
           )}
           <Button variant="primary" onClick={() => handleOpenModal()}>
-            <FontAwesomeIcon icon={faPlus} /> Tambah Detail Resep
+            <FontAwesomeIcon icon={faPlus} />
           </Button>
-          <Table striped bordered hover className="mt-3">
+          <Table striped bordered hover className="mt-3" ref={componentRef}>
             <thead>
               <tr>
                 <th>No</th>
                 <th>Nama Produk</th>
                 <th>Signa</th>
-                <th>Jumlah</th>
-                <th>Harga</th>
-                <th>Total harga</th>
-                <th>Aksi</th>
+                <th>Note 1</th>
+                <th>Note 2</th>
+                <th className="text-end">Jumlah</th>
+                <th className="text-end">Harga</th>
+                <th className="text-end">Total harga</th>
+                <th className="text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
-              {recipeDetails.map((detail, index) => (
+              {orderDetails.map((detail, index) => (
                 <tr key={detail.id}>
                   <td>{index + 1}</td>
                   <td>{detail.product.name}</td>
                   <td>{detail.signa.name}</td>
-                  <td>{detail.quantity}</td>
-                  <td>{detail.product.price}</td>
-                  <td>{detail.quantity * detail.product.price}</td>
-                  <td>
+                  <td>{detail.note}</td>
+                  <td>{detail.note2}</td>
+                  <td className="text-end">{detail.quantity}</td>
+                  <td className="text-end">{detail.product.price}</td>
+                  <td className="text-end">
+                    {detail.quantity * detail.product.price}
+                  </td>
+                  <td className="text-center">
                     <Button
-                      variant="info"
+                      variant="primary"
                       size="sm"
                       onClick={() => handleOpenModal(detail)}>
-                      <FontAwesomeIcon icon={faEdit} /> Edit
+                      <FontAwesomeIcon icon={faEdit} />
                     </Button>{" "}
                     <Button
                       variant="danger"
                       size="sm"
                       onClick={() => handleOpenDeleteModal(detail)}>
-                      <FontAwesomeIcon icon={faTrash} /> Hapus
+                      <FontAwesomeIcon icon={faTrash} />
                     </Button>
                   </td>
                 </tr>
@@ -351,11 +506,16 @@ const DetailRecipe: React.FC = () => {
                 <th className="text-end" colSpan={5}>
                   Jumlah Harga
                 </th>
-                <th>{totalJumlahHarga}</th>
+                <th className="text-end">{totalJumlahHarga}</th>
                 <th>
-                  <Button variant="outline-danger" onClick={handleCloseModal}>
-                    <FontAwesomeIcon icon={faPrint} /> Cetak resep
-                  </Button>
+                  <ReactToPrint
+                    trigger={() => (
+                      <Button variant="secondary" className="ms-2">
+                        <FontAwesomeIcon icon={faPrint} /> Cetak Detail Resep
+                      </Button>
+                    )}
+                    content={() => componentRef.current}
+                  />
                 </th>
               </tr>
             </tfoot>
@@ -416,7 +576,7 @@ const DetailRecipe: React.FC = () => {
                   <Form.Group controlId="dosis" style={{ flex: 1 }}>
                     <Form.Label>Dosis</Form.Label>
                     <Form.Control
-                      type="number"
+                      type="text"
                       name="dosis"
                       value={currentDetail?.dosis || ""}
                       onChange={handleChange}
@@ -477,4 +637,4 @@ const DetailRecipe: React.FC = () => {
   );
 };
 
-export default DetailRecipe;
+export default DetailOrder;
