@@ -13,7 +13,12 @@ import {
 import Link from "next/link";
 import AsyncSelect from "react-select/async";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faEdit, faPlus, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faEdit,
+  faPlus,
+  faPrint,
+  faTrash,
+} from "@fortawesome/free-solid-svg-icons";
 
 interface Recipe {
   id: number;
@@ -272,7 +277,10 @@ const DetailRecipe: React.FC = () => {
       });
     }
   };
-
+  const totalJumlahHarga = recipeDetails.reduce(
+    (total, detail) => total + detail.quantity * detail.product.price,
+    0
+  );
   return (
     <div className="container mt-4">
       <Breadcrumb>
@@ -335,6 +343,22 @@ const DetailRecipe: React.FC = () => {
                 </tr>
               ))}
             </tbody>
+            <tfoot>
+              <tr>
+                <th></th>
+              </tr>
+              <tr>
+                <th className="text-end" colSpan={5}>
+                  Jumlah Harga
+                </th>
+                <th>{totalJumlahHarga}</th>
+                <th>
+                  <Button variant="outline-danger" onClick={handleCloseModal}>
+                    <FontAwesomeIcon icon={faPrint} /> Cetak resep
+                  </Button>
+                </th>
+              </tr>
+            </tfoot>
           </Table>
           <Modal show={showModal} onHide={handleCloseModal}>
             <Modal.Header closeButton>
