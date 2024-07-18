@@ -46,6 +46,7 @@ interface Order {
   date: string;
   date_of_service: string;
   kind_of_medicine: string;
+  iteration: boolean;
 }
 interface Product {
   id: number;
@@ -73,7 +74,7 @@ interface SelectOption {
 }
 
 const DetailOrder: React.FC = () => {
-  const pharmacyServiceUrl = "http://127.0.0.1:8082/api";
+  const pharmacyServiceUrl = "http://localhost:8082/api";
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
   const [order, setOrder] = useState<Order | null>(null);
@@ -83,6 +84,7 @@ const DetailOrder: React.FC = () => {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const componentRef = useRef(null);
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -322,60 +324,13 @@ const DetailOrder: React.FC = () => {
                     <Form.Control
                       type="text"
                       name="no_of_receipt"
-                      // onChange={handleInputChange}
                       value={order.no_of_receipt}
-                      disabled
+                      disabled={!editing}
                       autoComplete="off"
                       required
                     />
                   </Form.Group>
                 </Col>
-                <Col>
-                  <Form.Group controlId="formPoli">
-                    <Form.Label>
-                      Poli
-                      <span className="text-danger"> * </span>
-                    </Form.Label>
-                    <AsyncSelect
-                      cacheOptions
-                      defaultOptions
-                      // onChange={handleSelectChange}
-                      // loadOptions={loadPoliOption}
-                      name="id_poli"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group controlId="formNoMrPatient">
-                    <Form.Label>
-                      Pasien <span className="text-danger"> * </span>
-                    </Form.Label>
-                    <AsyncSelect
-                      cacheOptions
-                      defaultOptions
-                      isDisabled
-                      // onChange={handleSelectChange}
-                      // loadOptions={loadNoMrOption}
-                      name="id_patient"
-                    />
-                  </Form.Group>
-                </Col>
-                <Col>
-                  <Form.Group controlId="formDoctorCode">
-                    <Form.Label>
-                      Dokter <span className="text-danger"> * </span>
-                    </Form.Label>
-                    <AsyncSelect
-                      cacheOptions
-                      defaultOptions
-                      // onChange={handleSelectChange}
-                      // loadOptions={loadDoctorOption}
-                      name="id_doctor"
-                    />
-                  </Form.Group>
-                </Col>
-              </Row>
-              <Row className="mb-3">
                 <Col>
                   <Form.Group controlId="formDate">
                     <Form.Label>
@@ -385,6 +340,7 @@ const DetailOrder: React.FC = () => {
                       type="date"
                       name="date"
                       value={order.date}
+                      disabled={!editing}
                       // onChange={handleInputChange}
                     />
                   </Form.Group>
@@ -398,6 +354,7 @@ const DetailOrder: React.FC = () => {
                       type="date"
                       name="date_of_service"
                       value={order.date_of_service}
+                      disabled={!editing}
                       // onChange={handleInputChange}
                     />
                   </Form.Group>
@@ -408,17 +365,11 @@ const DetailOrder: React.FC = () => {
                       Jenis Obat <span className="text-danger">*</span>
                     </Form.Label>
                     <Form.Control
-                      as="select"
+                      type="text"
                       name="kind_of_medicine"
                       value={order.kind_of_medicine}
-                      onChange={handleChange}
-                      autoComplete="off"
-                      required>
-                      <option value="">Pilih jenis obat</option>
-                      <option value={1}>Obat PRB</option>
-                      <option value={2}>Obat Kronis Blm Stabil</option>
-                      <option value={3}>Obat Kemoterapi</option>
-                    </Form.Control>
+                      disabled={!editing}
+                    />
                   </Form.Group>
                 </Col>
                 <Col>
@@ -427,26 +378,13 @@ const DetailOrder: React.FC = () => {
                     <Form.Check
                       type="checkbox"
                       name="iteration"
-                      // checked={order.iteration}
+                      disabled={!editing}
+                      checked={order.iteration}
                       // onChange={handleInputChange}
                       autoComplete="off"
                       className="mt-2"
                     />
                   </Form.Group>
-                </Col>
-              </Row>
-
-              <Row>
-                <Col className="text-end">
-                  <Button
-                    type="submit"
-                    variant="primary"
-                    className="mt-4"
-                    aria-label="simpan resep"
-                    title="simpan resep">
-                    <FontAwesomeIcon icon={faSave} size="2x" className="me-2" />
-                    Simpan
-                  </Button>
                 </Col>
               </Row>
             </Form>
@@ -503,7 +441,7 @@ const DetailOrder: React.FC = () => {
                 <th></th>
               </tr>
               <tr>
-                <th className="text-end" colSpan={5}>
+                <th className="text-end" colSpan={7}>
                   Jumlah Harga
                 </th>
                 <th className="text-end">{totalJumlahHarga}</th>
