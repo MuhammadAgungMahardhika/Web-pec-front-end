@@ -1,4 +1,5 @@
 "use client";
+import Config from "@/app/config";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,7 +19,7 @@ interface ProductCategory {
 }
 
 const ProductCategoryPage: React.FC = () => {
-  const pharmacyServiceUrl = "http://localhost:8082/api";
+  const pharmacyServiceUrl = Config.PHARMACYSERVICE_URl;
   const [productCategories, setProductCategories] = useState<ProductCategory[]>(
     []
   );
@@ -56,7 +57,7 @@ const ProductCategoryPage: React.FC = () => {
       }
     };
     loadProductCategories();
-  }, [pagination, searchQuery]);
+  }, [pharmacyServiceUrl, pagination, searchQuery]);
 
   const handleSaveProductCategory = async () => {
     if (!currentProductCategory) return;

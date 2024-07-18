@@ -1,4 +1,5 @@
 "use client";
+import Config from "@/app/config";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Button } from "react-bootstrap";
@@ -10,7 +11,7 @@ function LoginForm() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const authserviceUrl = process.env.AUTHSERVICE_URL;
+  const authserviceUrl = Config.AUTHSERVICE_URL;
 
   const fetchUser = async (token: string) => {
     const response = await fetch(authserviceUrl + "/me", {

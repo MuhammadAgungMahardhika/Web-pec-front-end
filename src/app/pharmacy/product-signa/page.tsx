@@ -1,4 +1,5 @@
 "use client";
+import Config from "@/app/config";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,7 +19,7 @@ interface Signa {
 }
 
 const SignaPage: React.FC = () => {
-  const pharmacyServiceUrl = "http://localhost:8082/api";
+  const pharmacyServiceUrl = Config.PHARMACYSERVICE_URl;
   const [loading, setLoading] = useState<boolean>(true);
   const [signas, setSignas] = useState<Signa[]>([]);
   const [currentSigna, setCurrentSigna] = useState<Signa | null>(null);
@@ -54,7 +55,7 @@ const SignaPage: React.FC = () => {
       }
     };
     loadSignas();
-  }, [pagination, searchQuery]);
+  }, [pharmacyServiceUrl, pagination, searchQuery]);
 
   const handleSaveSigna = async () => {
     if (!currentSigna) return;

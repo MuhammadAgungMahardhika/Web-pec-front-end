@@ -1,4 +1,5 @@
 "use client";
+import Config from "@/app/config";
 import React, { useState, useEffect, ChangeEvent } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -18,7 +19,7 @@ interface ProductUnit {
 }
 
 const ProductUnitPage: React.FC = () => {
-  const pharmacyServiceUrl = "http://localhost:8082/api";
+  const pharmacyServiceUrl = Config.PHARMACYSERVICE_URl;
   const [loading, setLoading] = useState<boolean>(true);
   const [productUnits, setProductUnits] = useState<ProductUnit[]>([]);
   const [currentProductUnit, setCurrentProductUnit] =
@@ -55,7 +56,7 @@ const ProductUnitPage: React.FC = () => {
       }
     };
     loadProductUnits();
-  }, [pagination, searchQuery]);
+  }, [pharmacyServiceUrl, pagination, searchQuery]);
 
   const handleSaveProductUnit = async () => {
     if (!currentProductUnit) return;
