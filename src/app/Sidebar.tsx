@@ -74,6 +74,20 @@ const menues: menu[] = [
           },
         ],
       },
+      {
+        name: "Cashier",
+        icon: "bi bi-stack",
+        submenu: [
+          {
+            name: "Layanan",
+            link: "/cashier/services",
+          },
+          {
+            name: "Transaksi",
+            link: "/cashier/transactions",
+          },
+        ],
+      },
     ],
   },
 ];
