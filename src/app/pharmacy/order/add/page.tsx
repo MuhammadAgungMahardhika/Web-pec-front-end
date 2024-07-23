@@ -1,15 +1,7 @@
 "use client";
 import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Row,
-  Col,
-  Stack,
-  Breadcrumb,
-  Form,
-  Button,
-  FormControl,
-} from "react-bootstrap";
+import { Row, Col, Stack, Breadcrumb, Form, Button } from "react-bootstrap";
 import AsyncSelect from "react-select/async";
 import { FailedAlert } from "@/app/components/alert/alert";
 import Link from "next/link";
@@ -229,7 +221,7 @@ const AddOrderPage: React.FC = () => {
               <Col>
                 <Form.Group controlId="formNoOrder">
                   <Form.Label>
-                    Nomor <span className="text-danger"> * </span>
+                    Nomor Resep<span className="text-danger"> * </span>
                   </Form.Label>
                   <Form.Control
                     type="text"
