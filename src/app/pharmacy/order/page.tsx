@@ -6,7 +6,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCaretLeft,
   faCaretRight,
-  faEdit,
   faInfo,
   faPlus,
   faTrash,
@@ -97,7 +96,7 @@ const MedicationRequestFormPage: React.FC = () => {
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, pageIndex: 1 }));
   };
 
   return (

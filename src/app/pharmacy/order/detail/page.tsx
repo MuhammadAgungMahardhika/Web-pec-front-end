@@ -23,6 +23,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import ReactToPrint from "react-to-print";
 import { FailedToast } from "@/app/components/toast/toast";
+import Config from "@/app/config";
 interface Poli {
   id: number;
   name: string;
@@ -42,7 +43,7 @@ interface Order {
   poli: Poli;
   patient: Patient;
   doctor: Doctor;
-  no_of_receipt: string;
+  no_of_order: string;
   date: string;
   date_of_service: string;
   kind_of_medicine: string;
@@ -68,13 +69,8 @@ interface OrderDetail {
   note2?: string;
 }
 
-interface SelectOption {
-  label: string;
-  value: number;
-}
-
 const DetailOrder: React.FC = () => {
-  const pharmacyServiceUrl = "http://localhost:8082/api";
+  const pharmacyServiceUrl = Config.PHARMACYSERVICE_URl;
   const searchParams = useSearchParams();
   const orderId = searchParams.get("id");
   const [order, setOrder] = useState<Order | null>(null);
@@ -90,15 +86,16 @@ const DetailOrder: React.FC = () => {
     const fetchOrder = async () => {
       try {
         const response = await fetch(`${pharmacyServiceUrl}/order/${orderId}`);
-        if (response.ok) {
-          const successResponse = await response.json();
-          const data = successResponse.data;
-          setOrder(data);
-        } else {
-          throw new Error("Gagal mendapatkan informasi resep");
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
-      } catch (error) {
-        console.error("Error saat mendapatkan informasi resep:", error);
+
+        const successResponse = await response.json();
+        const data = successResponse.data;
+        setOrder(data);
+      } catch (error: any) {
+        console.error(error.message);
       }
     };
 
@@ -107,17 +104,18 @@ const DetailOrder: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/detail-order/order-id/${orderId}`
         );
-        if (response.ok) {
-          const successResponse = await response.json();
-          const data = successResponse.data;
-          console.log(data);
-
-          setOrderDetails(data);
-        } else {
-          throw new Error("Gagal mendapatkan detail resep");
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
-      } catch (error) {
-        console.error("Error saat mendapatkan detail resep:", error);
+
+        const successResponse = await response.json();
+        const data = successResponse.data;
+        console.log(data);
+
+        setOrderDetails(data);
+      } catch (error: any) {
+        console.error(error.message);
       }
     };
 
@@ -125,7 +123,7 @@ const DetailOrder: React.FC = () => {
       fetchOrder();
       fetchOrderDetails();
     }
-  }, [orderId]);
+  }, [pharmacyServiceUrl, orderId]);
 
   const handleSaveDetail = async () => {
     if (!currentDetail) return;
@@ -143,28 +141,26 @@ const DetailOrder: React.FC = () => {
         body: JSON.stringify(currentDetail),
       });
 
-      if (response.ok) {
-        const updatedDetail = await response.json();
-        console.log(updatedDetail);
-        if (isEditMode) {
-          setOrderDetails((prev) =>
-            prev.map((detail) =>
-              detail.id === currentDetail.id ? updatedDetail.data : detail
-            )
-          );
-        } else {
-          setOrderDetails((prev) => [updatedDetail.data, ...prev]);
-        }
-        setShowModal(false);
-        setCurrentDetail(null);
-      } else {
-        const failedResponse = await response.json();
-        console.log(failedResponse);
-        throw new Error(failedResponse);
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
-    } catch (error) {
-      console.error(error);
-      FailedToast("Gagal menyimpan detail resep. Terjadi kesalahan.");
+
+      const updatedDetail = await response.json();
+      console.log(updatedDetail);
+      if (isEditMode) {
+        setOrderDetails((prev) =>
+          prev.map((detail) =>
+            detail.id === currentDetail.id ? updatedDetail.data : detail
+          )
+        );
+      } else {
+        setOrderDetails((prev) => [updatedDetail.data, ...prev]);
+      }
+      setShowModal(false);
+      setCurrentDetail(null);
+    } catch (error: any) {
+      FailedToast(error.message);
     }
   };
 
@@ -181,19 +177,17 @@ const DetailOrder: React.FC = () => {
         }
       );
 
-      if (response.ok) {
-        setOrderDetails((prev) =>
-          prev.filter((detail) => detail.id !== currentDetail.id)
-        );
-        setShowDeleteModal(false);
-        setCurrentDetail(null);
-      } else {
-        console.error("Gagal menghapus detail resep:", response.statusText);
-        FailedToast("Gagal menghapus detail resep. Coba lagi.");
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
-    } catch (error) {
-      console.error("Gagal menghapus detail resep:", error);
-      FailedToast("Gagal menghapus detail resep. Terjadi kesalahan.");
+      setOrderDetails((prev) =>
+        prev.filter((detail) => detail.id !== currentDetail.id)
+      );
+      setShowDeleteModal(false);
+      setCurrentDetail(null);
+    } catch (error: any) {
+      FailedToast(error.message);
     }
   };
 
@@ -253,13 +247,17 @@ const DetailOrder: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/product?search=${inputValue}`
         );
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
+        }
         const successResponse = await response.json();
         return successResponse.data.map((product: any) => ({
           value: product.id,
           label: product.name,
         }));
-      } catch (error) {
-        console.error("Gagal mendapatkan produk:", error);
+      } catch (error: any) {
+        FailedToast(error.message);
         return [];
       }
     },
@@ -272,13 +270,17 @@ const DetailOrder: React.FC = () => {
         const response = await fetch(
           `${pharmacyServiceUrl}/signa?search=${inputValue}`
         );
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
+        }
         const successResponse = await response.json();
         return successResponse.data.map((signa: any) => ({
           value: signa.id,
           label: signa.name,
         }));
-      } catch (error) {
-        console.error("Gagal mendapatkan signa:", error);
+      } catch (error: any) {
+        FailedToast(error.message);
         return [];
       }
     },
@@ -323,8 +325,8 @@ const DetailOrder: React.FC = () => {
                     </Form.Label>
                     <Form.Control
                       type="text"
-                      name="no_of_receipt"
-                      value={order.no_of_receipt}
+                      name="no_of_order"
+                      value={order.no_of_order}
                       disabled={!editing}
                       autoComplete="off"
                       required
@@ -400,6 +402,7 @@ const DetailOrder: React.FC = () => {
                 <th>Signa</th>
                 <th>Note 1</th>
                 <th>Note 2</th>
+                <th>Dosis</th>
                 <th className="text-end">Jumlah</th>
                 <th className="text-end">Harga</th>
                 <th className="text-end">Total harga</th>
@@ -414,6 +417,7 @@ const DetailOrder: React.FC = () => {
                   <td>{detail.signa.name}</td>
                   <td>{detail.note}</td>
                   <td>{detail.note2}</td>
+                  <td>{detail.dosis}</td>
                   <td className="text-end">{detail.quantity}</td>
                   <td className="text-end">{detail.product.price}</td>
                   <td className="text-end">
@@ -441,7 +445,7 @@ const DetailOrder: React.FC = () => {
                 <th></th>
               </tr>
               <tr>
-                <th className="text-end" colSpan={7}>
+                <th className="text-end" colSpan={8}>
                   Jumlah Harga
                 </th>
                 <th className="text-end">{totalJumlahHarga}</th>
@@ -449,7 +453,7 @@ const DetailOrder: React.FC = () => {
                   <ReactToPrint
                     trigger={() => (
                       <Button variant="secondary" className="ms-2">
-                        <FontAwesomeIcon icon={faPrint} /> Cetak Detail Resep
+                        <FontAwesomeIcon icon={faPrint} /> Cetak Permintaan Obat
                       </Button>
                     )}
                     content={() => componentRef.current}
@@ -461,7 +465,7 @@ const DetailOrder: React.FC = () => {
           <Modal show={showModal} onHide={handleCloseModal}>
             <Modal.Header closeButton>
               <Modal.Title>
-                {isEditMode ? "Edit" : "Tambah"} Detail Resep
+                {isEditMode ? "Edit" : "Tambah"} Permintaan Obat
               </Modal.Title>
             </Modal.Header>
             <Modal.Body>
@@ -558,7 +562,7 @@ const DetailOrder: React.FC = () => {
               <Modal.Title>Konfirmasi Hapus</Modal.Title>
             </Modal.Header>
             <Modal.Body>
-              Apakah Anda yakin ingin menghapus detail resep ini?
+              Apakah Anda yakin ingin menghapus Permintaan Obat ini?
             </Modal.Body>
             <Modal.Footer>
               <Button variant="secondary" onClick={handleCloseDeleteModal}>

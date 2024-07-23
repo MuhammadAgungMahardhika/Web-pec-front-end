@@ -43,15 +43,14 @@ const SignaPage: React.FC = () => {
         );
         setLoading(false);
         if (!response.ok) {
-          console.error(response.statusText);
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
 
         const data = await response.json();
         setSignas(data.data);
       } catch (error: any) {
-        console.error("Failed to load product units:", error);
-        FailedAlert("Failed to load product units:" + error.message);
+        FailedAlert(error.message);
       }
     };
     loadSignas();
@@ -74,8 +73,8 @@ const SignaPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        console.error(response.statusText);
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       const updatedSigna = await response.json();
@@ -91,8 +90,7 @@ const SignaPage: React.FC = () => {
       setShowModal(false);
       setCurrentSigna(null);
     } catch (error: any) {
-      console.error("Failed to load product units:", error);
-      FailedAlert("Failed to load product units:" + error.message);
+      FailedAlert(error.message);
     }
   };
 
@@ -110,16 +108,15 @@ const SignaPage: React.FC = () => {
       );
 
       if (!response.ok) {
-        console.error(response.statusText);
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       setSignas((prev) => prev.filter((signa) => signa.id !== currentSigna.id));
       setShowDeleteModal(false);
       setCurrentSigna(null);
     } catch (error: any) {
-      console.error("Failed to load product units:", error);
-      FailedAlert("Failed to load product units:" + error.message);
+      FailedAlert(error.message);
     }
   };
 
