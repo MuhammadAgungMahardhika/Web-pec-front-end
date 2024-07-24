@@ -39,6 +39,7 @@ interface Transaction {
   total_transaction: number;
   upfront_payment: number;
   remaining_payment: number;
+  amount: number;
   return_amount: number;
   payment_status: string;
 }
@@ -236,6 +237,7 @@ const TransactionsPage: React.FC = () => {
         total_transaction: 0,
         upfront_payment: 0,
         remaining_payment: 0,
+        amount: 0,
         return_amount: 0,
         payment_status: "",
       });
@@ -404,7 +406,7 @@ const TransactionsPage: React.FC = () => {
     <div className="container mt-4">
       <div className="card">
         <div className="card-header">
-          <h3>Transactions</h3>
+          <h3>Kasir</h3>
         </div>
         <div className="card-body">
           <Stack direction="horizontal" gap={2} className="mb-3">
@@ -428,14 +430,15 @@ const TransactionsPage: React.FC = () => {
             <thead>
               <tr>
                 <th>#</th>
-                <th>Date</th>
-                <th>Payment Method</th>
-                <th className="text-end">Total Transaction</th>
-                <th className="text-end">Upfront Payment</th>
-                <th className="text-end">Remaining Payment</th>
-                <th className="text-end">Return Amount</th>
+                <th>Tanggal</th>
+                <th>Metode Bayar</th>
+                <th className="text-end">Total Harga</th>
+                <th className="text-end">Uang Di Muka</th>
+                <th className="text-end">Sisa Bayar</th>
+                <th className="text-end">Terima Uang</th>
+                <th className="text-end">Kembali</th>
                 <th>Payment Status</th>
-                <th className="text-center">Actions</th>
+                <th className="text-center">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -449,6 +452,7 @@ const TransactionsPage: React.FC = () => {
                   <td className="text-end">{transaction.total_transaction}</td>
                   <td className="text-end">{transaction.upfront_payment}</td>
                   <td className="text-end">{transaction.remaining_payment}</td>
+                  <td className="text-end">{transaction.amount}</td>
                   <td className="text-end">{transaction.return_amount}</td>
                   <td>{transaction.payment_status}</td>
                   <td>

@@ -22,7 +22,7 @@ import {
   faSave,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import { FailedToast } from "@/app/components/toast/toast";
+import { FailedToast, SuccessToast } from "@/app/components/toast/toast";
 import Config from "@/app/config";
 interface Poli {
   id: number;
@@ -51,7 +51,7 @@ interface Transaction {
   date: string;
   payment_methode: string;
   total_transaction: number;
-  upfront_payment: number;
+  upfront_payment: number|undefined;
   remaining_payment: number;
   amount: number;
   return_amount: number;
@@ -93,6 +93,8 @@ const DetailTransaction: React.FC = () => {
   const [isEditMode, setIsEditMode] = useState(false);
   const componentRef = useRef(null);
   const [editing, setEditing] = useState(false);
+  const [isLunas, setIsLunas] = useState(false);
+  const [isPrintable, setIsPrintable] = useState(true);
 
   useEffect(() => {
     const fetchTransaction = async () => {
@@ -101,6 +103,10 @@ const DetailTransaction: React.FC = () => {
         if (response.ok) {
           const successResponse = await response.json();
           const data = successResponse.data;
+          if (data.payment_status == 'Lunas') {
+            setIsLunas(true);
+            setIsPrintable(false);
+          }
           setTransaction(data);
         } else {
           throw new Error("Gagal mendapatkan informasi transaksi");
@@ -203,7 +209,7 @@ const DetailTransaction: React.FC = () => {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(currentDetail),
+        body: JSON.stringify(currentTransaction),
       });
 
       if (response.ok) {
@@ -216,6 +222,9 @@ const DetailTransaction: React.FC = () => {
         );
         setShowProcessModal(false);
         setCurrentTransaction(null);
+        setIsLunas(true);
+        setIsPrintable(false);
+        SuccessToast("Transaksi berhasil diproses! Silakan cetak struk!");
       } else {
         const failedResponse = await response.json();
         console.log(failedResponse);
@@ -223,7 +232,7 @@ const DetailTransaction: React.FC = () => {
       }
     } catch (error) {
       console.error(error);
-      FailedToast("Gagal memproses transaksi. Terjadi kesalahan.");
+      FailedToast("Gagal memproses transaksi. Terjadi kesalahan: "+error);
     }
   };
 
@@ -385,8 +394,8 @@ const DetailTransaction: React.FC = () => {
     }
   };
 
-  const totalJumlahHarga = transactionDetails.reduce(
-    (total, detail) => total + (detail.quantity *   detail.service.price) - detail.discount,
+  const totalJumlahHarga:number = transactionDetails.reduce(
+    (total, detail) => total + (detail.quantity * detail.service.price) - detail.discount,
     0
   );
   return (
@@ -534,26 +543,43 @@ const DetailTransaction: React.FC = () => {
             </tbody>
             <tfoot>
               <tr>
-                <th></th>
+                <th className="text-end" colSpan={5}>
+                  Biaya di muka
+                </th>
+                <th className="text-end">{transaction?.upfront_payment}</th>
               </tr>
               <tr>
                 <th className="text-end" colSpan={5}>
                   Jumlah Harga
                 </th>
-                <th className="text-end">{totalJumlahHarga}</th>
+                <th className="text-end">{totalJumlahHarga + (transaction?.upfront_payment ?? 0)}</th>
                 <th>
-                <Button variant="secondary">
-                  <Link href={`${cashierServiceUrl}/detail-transaction/printpdf/${transactionId}`} passHref legacyBehavior>
+                <Button variant="secondary" disabled={isPrintable}>
+                  {isPrintable ? (
+                    <>
+                    <FontAwesomeIcon icon={faFilePdf} /> Cetak Struk
+                  </>
+                  ) : (
+                    <Link href={`${cashierServiceUrl}/detail-transaction/printpdf/${transactionId}`} passHref legacyBehavior>
                     <a style={{color: 'var(--bs-btn-color)'}} target="_blank" rel="noopener noreferrer">
                       <FontAwesomeIcon icon={faFilePdf} /> Cetak Struk
                     </a>
                   </Link>
+                    
+                  )}
                 </Button>
-                <Button
-                  variant="primary"
-                  onClick={() => handleOpenProcessModal()}>
-                  Proses Transaksi
-                </Button>
+                {transaction && (
+  <Button
+    variant="primary"
+    disabled={isLunas}
+    onClick={() => handleOpenProcessModal({
+      id: transaction.id,
+      payment_methode: transaction.payment_methode,
+      amount: transaction.amount,
+    })}>
+    Proses Transaksi
+  </Button>
+)}
                 </th>
               </tr>
             </tfoot>
@@ -651,7 +677,7 @@ const DetailTransaction: React.FC = () => {
                   e.preventDefault();
                   handleSaveDetail();
                 }}>
-                  <Form.Group controlId="payment_method" style={{ flex: 1 }}>
+                  <Form.Group controlId="payment_methode" style={{ flex: 1 }}>
                     <Form.Label>Metode Pembayaran</Form.Label>
                     <AsyncSelect
                       cacheOptions
