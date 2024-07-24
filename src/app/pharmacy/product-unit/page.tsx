@@ -12,6 +12,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FailedAlert } from "@/app/components/alert/alert";
 import LoadingSpinner from "@/app/components/spinner/spinner";
+import { FailedToast } from "@/app/components/toast/toast";
 
 interface ProductUnit {
   id: number;
@@ -45,14 +46,13 @@ const ProductUnitPage: React.FC = () => {
 
         setLoading(false);
         if (!response.ok) {
-          console.error(response.statusText);
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
         const data = await response.json();
         setProductUnits(data.data);
       } catch (error: any) {
-        console.error("Failed to load product units:", error);
-        FailedAlert("Failed to load product units:" + error.message);
+        FailedAlert(error.message);
       }
     };
     loadProductUnits();
@@ -75,8 +75,8 @@ const ProductUnitPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        console.error(response.statusText);
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       const updatedProductUnit = await response.json();
@@ -92,8 +92,7 @@ const ProductUnitPage: React.FC = () => {
       setShowModal(false);
       setCurrentProductUnit(null);
     } catch (error: any) {
-      console.error("Failed to save product unit:", error);
-      FailedAlert("Failed to save product unit:" + error.message);
+      FailedAlert(error.message);
     }
   };
 
@@ -110,8 +109,8 @@ const ProductUnitPage: React.FC = () => {
         }
       );
       if (!response.ok) {
-        console.error(response.statusText);
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       setProductUnits((prev) =>
@@ -119,9 +118,8 @@ const ProductUnitPage: React.FC = () => {
       );
       setShowDeleteModal(false);
       setCurrentProductUnit(null);
-    } catch (error) {
-      console.error("Failed to delete product unit:", error);
-      alert("Failed to delete product unit. An error occurred.");
+    } catch (error: any) {
+      FailedToast(error.message);
     }
   };
 

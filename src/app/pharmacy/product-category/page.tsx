@@ -46,14 +46,14 @@ const ProductCategoryPage: React.FC = () => {
         );
         setLoading(false);
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
         const data = await response.json();
         setProductCategories(data.data);
         setLoading(false);
       } catch (error: any) {
-        console.error("Failed to load product units:", error);
-        FailedAlert("Failed to load product units:" + error.message);
+        FailedAlert(error.message);
       }
     };
     loadProductCategories();
@@ -76,7 +76,8 @@ const ProductCategoryPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       const updatedProductCategory = await response.json();
@@ -94,8 +95,7 @@ const ProductCategoryPage: React.FC = () => {
       setShowModal(false);
       setCurrentProductCategory(null);
     } catch (error: any) {
-      console.error("Failed to load product units:", error);
-      FailedAlert("Failed to load product units:" + error.message);
+      FailedAlert(error.message);
     }
   };
 
@@ -113,7 +113,8 @@ const ProductCategoryPage: React.FC = () => {
       );
 
       if (!response.ok) {
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       setProductCategories((prev) =>
@@ -122,8 +123,7 @@ const ProductCategoryPage: React.FC = () => {
       setShowDeleteModal(false);
       setCurrentProductCategory(null);
     } catch (error: any) {
-      console.error("Failed to load product units:", error);
-      FailedAlert("Failed to load product units:" + error.message);
+      FailedAlert(error.message);
     }
   };
 

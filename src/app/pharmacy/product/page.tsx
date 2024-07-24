@@ -69,15 +69,15 @@ const ProductPage: React.FC = () => {
           `${pharmacyServiceUrl}/product?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
 
-        const data = await response.json();
-        setProducts(data.data);
+        const successResponse = await response.json();
+        setProducts(successResponse.data);
         setLoading(false);
       } catch (error: any) {
-        console.error("Failed to load product units:", error);
-        FailedToast("Failed to load product units:" + error.message);
+        FailedToast(error.message);
       }
     };
     loadProducts();
@@ -100,7 +100,8 @@ const ProductPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       const updatedProduct = await response.json();
@@ -113,17 +114,16 @@ const ProductPage: React.FC = () => {
               : product
           )
         );
-        SuccessToast("Berhasil mengedit produk");
+        SuccessToast(updatedProduct.message);
       } else {
         setProducts((prev) => [updatedProduct.data, ...prev]);
-        SuccessToast("Berhasil menambahkan produk");
+        SuccessToast(updatedProduct.message);
       }
 
       setShowModal(false);
       setCurrentProduct(null);
     } catch (error: any) {
-      console.error("Failed to save product:", error);
-      FailedToast(`Failed to save product: ${error.message}`);
+      FailedToast(error.message);
     }
   };
 
@@ -141,18 +141,18 @@ const ProductPage: React.FC = () => {
       );
 
       if (!response.ok) {
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
-
-      SuccessToast("Berhasil menghapus produk");
+      const successResponse = await response.json();
+      SuccessToast(successResponse.message);
       setProducts((prev) =>
         prev.filter((product) => product.id !== currentProduct.id)
       );
       setShowDeleteModal(false);
       setCurrentProduct(null);
     } catch (error: any) {
-      console.error("Failed to delete product:", error);
-      FailedToast(`Failed to delete product: : ${error.message}`);
+      FailedToast(error.message);
     }
   };
 
@@ -161,39 +161,49 @@ const ProductPage: React.FC = () => {
       setCurrentProduct(product);
       setIsEditMode(true);
 
-      if (product.id_category && product.id_unit) {
+      if (product.id_category) {
         try {
-          const [categoryResponse, unitResponse] = await Promise.all([
-            fetch(
-              `${pharmacyServiceUrl}/product-category/${product.id_category}`
-            ),
-            fetch(`${pharmacyServiceUrl}/product-unit/${product.id_unit}`),
-          ]);
+          const categoryResponse = await fetch(
+            `${pharmacyServiceUrl}/product-category/${product.id_category}`
+          );
 
           if (!categoryResponse.ok) {
-            throw new Error(categoryResponse.statusText);
-          }
-          if (!unitResponse.ok) {
-            throw new Error(unitResponse.statusText);
+            const errorResponse = await categoryResponse.json();
+            throw new Error(errorResponse.message);
           }
 
           const categoryData = await categoryResponse.json();
-          const unitData = await unitResponse.json();
-
           setInitialCategory({
             value: categoryData.data.id,
             label: categoryData.data.name,
           });
+        } catch (error: any) {
+          FailedToast(error.message);
+        }
+      } else {
+        setInitialCategory(null);
+      }
+      if (product.id_unit) {
+        try {
+          const unitResponse = await fetch(
+            `${pharmacyServiceUrl}/product-unit/${product.id_unit}`
+          );
+
+          if (!unitResponse.ok) {
+            const errorResponse = await unitResponse.json();
+            throw new Error(errorResponse.message);
+          }
+
+          const unitData = await unitResponse.json();
+
           setInitialUnit({
             value: unitData.data.id,
             label: unitData.data.name,
           });
         } catch (error: any) {
-          console.error("Failed to retrieve:", error);
-          FailedToast(`Failed to retrieve: ${error.message}`);
+          FailedToast(error.message);
         }
       } else {
-        setInitialCategory(null);
         setInitialUnit(null);
       }
     } else {
@@ -261,7 +271,8 @@ const ProductPage: React.FC = () => {
           `${pharmacyServiceUrl}/product-category?search=${inputValue}`
         );
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorMessage = await response.json();
+          throw new Error(errorMessage.message);
         }
         const successResponse = await response.json();
         const options = successResponse.data.map((productCategory: any) => ({
@@ -271,8 +282,7 @@ const ProductPage: React.FC = () => {
 
         return options;
       } catch (error: any) {
-        console.error("Failed to load product categories:", error);
-        FailedToast("Failed to load product categories:" + error.message);
+        FailedToast(error.message);
         return [];
       }
     },
@@ -287,7 +297,8 @@ const ProductPage: React.FC = () => {
         );
 
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
         const successResponse = await response.json();
         const options = successResponse.data.map((productUnit: any) => ({
@@ -297,8 +308,7 @@ const ProductPage: React.FC = () => {
 
         return options;
       } catch (error: any) {
-        console.error("Failed to load product units:", error);
-        FailedToast("Failed to load product units:" + error.message);
+        FailedToast(error.message);
         return [];
       }
     },

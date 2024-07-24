@@ -1,15 +1,7 @@
 "use client";
 import React, { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import {
-  Row,
-  Col,
-  Stack,
-  Breadcrumb,
-  Form,
-  Button,
-  FormControl,
-} from "react-bootstrap";
+import { Row, Col, Stack, Breadcrumb, Form, Button } from "react-bootstrap";
 import AsyncSelect from "react-select/async";
 import { FailedAlert } from "@/app/components/alert/alert";
 import Link from "next/link";
@@ -20,7 +12,7 @@ interface Order {
   id_patient: string;
   id_poli: number;
   id_doctor: string;
-  no_of_receipt: string;
+  no_of_order: string;
   date: string;
   date_of_service: string;
   kind_of_medicine: number;
@@ -41,7 +33,7 @@ const AddOrderPage: React.FC = () => {
     id_patient: "",
     id_poli: 1,
     id_doctor: "",
-    no_of_receipt: "",
+    no_of_order: "",
     date: getCurrentDate(),
     date_of_service: getCurrentDate(),
     kind_of_medicine: 0,
@@ -94,17 +86,15 @@ const AddOrderPage: React.FC = () => {
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.log(errorData);
-        throw new Error(response.statusText);
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
 
       const data: any = await response.json();
 
       router.push(`/pharmacy/order/detail?id=${data.data.id}`);
     } catch (error: any) {
-      console.error(error);
-      FailedAlert(`Failed to add order:${error.message}`);
+      FailedAlert(error.message);
     }
   };
 
@@ -115,7 +105,8 @@ const AddOrderPage: React.FC = () => {
           `${pharmacyServiceUrl}/patient?search=${inputValue}`
         );
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
         const successResponse = await response.json();
         const options = successResponse.data.map((patient: any) => ({
@@ -125,8 +116,7 @@ const AddOrderPage: React.FC = () => {
 
         return options;
       } catch (error: any) {
-        console.error("Failed to load patient:", error);
-        FailedToast("Failed to load patient:" + error.message);
+        FailedToast(error.message);
         return [];
       }
     },
@@ -140,7 +130,8 @@ const AddOrderPage: React.FC = () => {
           `${pharmacyServiceUrl}/outpatient-clinic?search=${inputValue}`
         );
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
         const successResponse = await response.json();
         const options = successResponse.data.map((outpatientClinic: any) => ({
@@ -150,8 +141,7 @@ const AddOrderPage: React.FC = () => {
 
         return options;
       } catch (error: any) {
-        console.error("Failed to load outpatientClinic:", error);
-        FailedToast("Failed to load outpatientClinic:" + error.message);
+        FailedToast(error.message);
         return [];
       }
     },
@@ -165,7 +155,8 @@ const AddOrderPage: React.FC = () => {
           `${pharmacyServiceUrl}/doctor?search=${inputValue}`
         );
         if (!response.ok) {
-          throw new Error(response.statusText);
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
         const successResponse = await response.json();
         const options = successResponse.data.map((doctor: any) => ({
@@ -175,8 +166,7 @@ const AddOrderPage: React.FC = () => {
 
         return options;
       } catch (error: any) {
-        console.error("Failed to load doctor:", error);
-        FailedToast("Failed to load doctor:" + error.message);
+        FailedToast(error.message);
         return [];
       }
     },
@@ -231,13 +221,13 @@ const AddOrderPage: React.FC = () => {
               <Col>
                 <Form.Group controlId="formNoOrder">
                   <Form.Label>
-                    Nomor <span className="text-danger"> * </span>
+                    Nomor Resep<span className="text-danger"> * </span>
                   </Form.Label>
                   <Form.Control
                     type="text"
-                    name="no_of_receipt"
+                    name="no_of_order"
                     onChange={handleInputChange}
-                    value={newOrder.no_of_receipt}
+                    value={newOrder.no_of_order}
                     autoComplete="off"
                     required
                   />

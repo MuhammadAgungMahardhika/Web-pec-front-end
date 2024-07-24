@@ -6,17 +6,17 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faCaretLeft,
   faCaretRight,
-  faEdit,
   faInfo,
   faPlus,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import Link from "next/link";
+import { FailedToast } from "@/app/components/toast/toast";
 
 // Interface untuk  (Order)
 interface Order {
   id: number;
-  no_of_receipt: string;
+  no_of_order: string;
   id_patient: string;
   id_poli: string;
   id_doctor: string;
@@ -49,14 +49,15 @@ const MedicationRequestFormPage: React.FC = () => {
         const response = await fetch(
           `${orderServiceUrl}/order?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
         );
-        if (response.ok) {
-          const data = await response.json();
-          setOrders(data.data);
-        } else {
-          console.error("Failed to fetch orders:", response.statusText);
+        if (!response.ok) {
+          const errorResponse = await response.json();
+          throw new Error(errorResponse.message);
         }
-      } catch (error) {
-        console.error("Failed to fetch orders:", error);
+
+        const successResponse = await response.json();
+        setOrders(successResponse.data);
+      } catch (error: any) {
+        FailedToast(error.message);
       }
     };
 
@@ -73,15 +74,14 @@ const MedicationRequestFormPage: React.FC = () => {
         },
       });
 
-      if (response.ok) {
-        setOrders((prevOrders) => prevOrders.filter((r) => r.id !== order.id));
-      } else {
-        console.error("Failed to delete order:", response.statusText);
-        alert("Failed to delete order. Please try again.");
+      if (!response.ok) {
+        const errorResponse = await response.json();
+        throw new Error(errorResponse.message);
       }
-    } catch (error) {
-      console.error("Failed to delete order:", error);
-      alert("Failed to delete order. An error occurred.");
+
+      setOrders((prevOrders) => prevOrders.filter((r) => r.id !== order.id));
+    } catch (error: any) {
+      FailedToast(error.message);
     }
   };
 
@@ -97,7 +97,7 @@ const MedicationRequestFormPage: React.FC = () => {
 
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
-    setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+    setPagination((prev) => ({ ...prev, pageIndex: 1 }));
   };
 
   return (
@@ -137,7 +137,7 @@ const MedicationRequestFormPage: React.FC = () => {
               {orders.map((order, index) => (
                 <tr key={order.id}>
                   <td>{index + 1}</td>
-                  <td>{order.no_of_receipt}</td>
+                  <td>{order.no_of_order}</td>
                   <td>{order.id_patient}</td>
                   <td>{order.id_poli}</td>
                   <td>{order.date}</td>
