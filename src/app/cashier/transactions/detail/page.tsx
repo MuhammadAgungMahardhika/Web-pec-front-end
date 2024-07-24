@@ -16,12 +16,12 @@ import AsyncSelect from "react-select/async";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import {
   faEdit,
+  faFilePdf,
   faPlus,
   faPrint,
   faSave,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
-import ReactToPrint from "react-to-print";
 import { FailedToast } from "@/app/components/toast/toast";
 import Config from "@/app/config";
 interface Poli {
@@ -49,12 +49,18 @@ interface Transaction {
   poli: Poli;
   doctor: Doctor;
   date: string;
-  payment_methode: number;
+  payment_methode: string;
   total_transaction: number;
   upfront_payment: number;
   remaining_payment: number;
+  amount: number;
   return_amount: number;
   payment_status: string;
+}
+interface ProcessTransaction {
+  id: number;
+  payment_methode: string;
+  amount: number;
 }
 interface Services {
   id: number;
@@ -64,7 +70,7 @@ interface Services {
 }
 interface TransactionDetails {
   id: number;
-  id_transaction: number | null;
+  id_transaction: number | null | undefined;
   service: Services;
   doctor: Doctor;
   time: string;
@@ -79,8 +85,10 @@ const DetailTransaction: React.FC = () => {
   const transactionId = searchParams.get("id");
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [transactionDetails, setTransactionDetails] = useState<TransactionDetails[]>([]);
+  const [currentTransaction, setCurrentTransaction] = useState<ProcessTransaction | null>(null);
   const [currentDetail, setCurrentDetail] = useState<TransactionDetails | null>(null);
   const [showModal, setShowModal] = useState(false);
+  const [showProcessModal, setShowProcessModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const componentRef = useRef(null);
@@ -125,7 +133,23 @@ const DetailTransaction: React.FC = () => {
       fetchTransaction();
       fetchTransactionDetails();
     }
-  }, [transactionId]);
+  }, [cashierServiceUrl, transactionId]);
+
+  const fetchPaymentMethodeOptions = async () => {
+    // Replace this with your actual API call
+    return [
+      { value: 'Cash', label: 'Cash' },
+      { value: 'Debet Card', label: 'Debet Card' },
+      { value: 'Credit Card', label: 'Credit Card' },
+      { value: 'Piutang BPJS', label: 'Piutang BPJS' },
+      { value: 'Piutang Perusahaan', label: 'Piutang Perusahaan' },
+      { value: 'Piutang Pasien', label: 'Piutang Pasien' },
+      { value: 'Piutang Karyawan', label: 'Piutang Karyawan' },
+      { value: 'Piutang Rawat Inap', label: 'Piutang Rawat Inap' },
+      { value: 'Piutang Asuransi', label: 'Piutang Asuransi' },
+      { value: 'Piutang Pemda', label: 'Piutang Pemda' },
+    ];
+  };
 
   const handleSaveDetail = async () => {
     if (!currentDetail) return;
@@ -168,6 +192,41 @@ const DetailTransaction: React.FC = () => {
     }
   };
 
+  const handleProcess = async () => {
+    if (!currentTransaction) return;
+    const method = "PUT";
+    const url = `${cashierServiceUrl}/transaction/${currentTransaction.id}`;
+
+    try {
+      const response = await fetch(url, {
+        method,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(currentDetail),
+      });
+
+      if (response.ok) {
+        const updatedTransaction = await response.json();
+        console.log(updatedTransaction);
+        setTransactionDetails((prev) =>
+          prev.map((detail) =>
+            detail.id === currentTransaction.id ? updatedTransaction.data : detail
+          )
+        );
+        setShowProcessModal(false);
+        setCurrentTransaction(null);
+      } else {
+        const failedResponse = await response.json();
+        console.log(failedResponse);
+        throw new Error(failedResponse);
+      }
+    } catch (error) {
+      console.error(error);
+      FailedToast("Gagal memproses transaksi. Terjadi kesalahan.");
+    }
+  };
+
   const handleDeleteDetail = async () => {
     if (!currentDetail) return;
     try {
@@ -205,7 +264,7 @@ const DetailTransaction: React.FC = () => {
     } else {
       setCurrentDetail({
         id: 0,
-        id_transaction: 0,
+        id_transaction: transaction?.id,
         service: {
             id: 0,
             name: "",
@@ -226,6 +285,12 @@ const DetailTransaction: React.FC = () => {
     setShowModal(true);
   };
 
+  const handleOpenProcessModal = (transaction: ProcessTransaction) => {
+    console.log(transaction);
+    setCurrentTransaction(transaction);
+    setShowProcessModal(true);
+  };
+
   const handleOpenDeleteModal = (detail: TransactionDetails) => {
     setCurrentDetail(detail);
     setShowDeleteModal(true);
@@ -234,6 +299,11 @@ const DetailTransaction: React.FC = () => {
   const handleCloseModal = () => {
     setShowModal(false);
     setCurrentDetail(null);
+  };
+
+  const handleCloseProcessModal = () => {
+    setShowProcessModal(false);
+    setCurrentTransaction(null);
   };
 
   const handleCloseDeleteModal = () => {
@@ -245,6 +315,13 @@ const DetailTransaction: React.FC = () => {
     const { name, value } = e.target;
     if (currentDetail) {
       setCurrentDetail({ ...currentDetail, [name]: value });
+    }
+  };
+
+  const handleProcessTransaction = (e: ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    if (currentTransaction) {
+      setCurrentTransaction({ ...currentTransaction, [name]: value });
     }
   };
 
@@ -296,8 +373,20 @@ const DetailTransaction: React.FC = () => {
       });
     }
   };
+
+  const handleSelectProcessChange = (selectedOption: any, action: any) => {
+    console.log(selectedOption);
+    console.log(action);
+    if (currentTransaction && action.name) {
+      setCurrentTransaction({
+        ...currentTransaction,
+        [action.name]: selectedOption ? selectedOption.value : 0,
+      });
+    }
+  };
+
   const totalJumlahHarga = transactionDetails.reduce(
-    (total, detail) => total + detail.quantity * detail.service.price,
+    (total, detail) => total + (detail.quantity *   detail.service.price) - detail.discount,
     0
   );
   return (
@@ -320,29 +409,82 @@ const DetailTransaction: React.FC = () => {
                 <Col>
                   <Form.Group controlId="formNoTransaction">
                     <Form.Label>
-                      ID <span className="text-danger"> * </span>
+                      ID
                     </Form.Label>
                     <Form.Control
                       type="text"
                       name="id"
                       value={transaction.id}
                       disabled={!editing}
-                      autoComplete="off"
-                      required
                     />
                   </Form.Group>
                 </Col>
                 <Col>
                   <Form.Group controlId="formDate">
                     <Form.Label>
-                      Tanggal <span className="text-danger"> * </span>
+                      Tanggal
                     </Form.Label>
                     <Form.Control
                       type="date"
                       name="date"
                       value={transaction.date}
                       disabled={!editing}
-                      // onChange={handleInputChange}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col>
+                  <Form.Group controlId="formPatient">
+                    <Form.Label>
+                      Nama Pasien
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="patient_name"
+                      value={transaction.patient.name}
+                      disabled={!editing}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formDoctor">
+                    <Form.Label>
+                      Nama Dokter
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="doctor_name"
+                      value={transaction.doctor.name}
+                      disabled={!editing}
+                    />
+                  </Form.Group>
+                </Col>
+              </Row>
+              <Row className="mb-3">
+                <Col>
+                  <Form.Group controlId="formOutpatient">
+                    <Form.Label>
+                      Rawat Jalan
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="outpatient_name"
+                      value={transaction.outpatient.name}
+                      disabled={!editing}
+                    />
+                  </Form.Group>
+                </Col>
+                <Col>
+                  <Form.Group controlId="formPoli">
+                    <Form.Label>
+                      Unit
+                    </Form.Label>
+                    <Form.Control
+                      type="text"
+                      name="poli_name"
+                      value={transaction.poli.name}
+                      disabled={!editing}
                     />
                   </Form.Group>
                 </Col>
@@ -358,6 +500,8 @@ const DetailTransaction: React.FC = () => {
                 <th>No</th>
                 <th>Nama Layanan</th>
                 <th className="text-end">Jumlah</th>
+                <th className="text-end">Harga</th>
+                <th className="text-end">Diskon</th>
                 <th className="text-end">Total harga</th>
                 <th className="text-center">Aksi</th>
               </tr>
@@ -368,9 +512,9 @@ const DetailTransaction: React.FC = () => {
                   <td>{index + 1}</td>
                   <td>{detail.service.name}</td>
                   <td className="text-end">{detail.quantity}</td>
-                  <td className="text-end">
-                    {detail.quantity * detail.service.price}
-                  </td>
+                  <td className="text-end">{detail.service.price}</td>
+                  <td className="text-end">{detail.discount}</td>
+                  <td className="text-end">{(detail.quantity * detail.service.price) - detail.discount}</td>
                   <td className="text-center">
                     <Button
                       variant="primary"
@@ -393,19 +537,23 @@ const DetailTransaction: React.FC = () => {
                 <th></th>
               </tr>
               <tr>
-                <th className="text-end" colSpan={3}>
+                <th className="text-end" colSpan={5}>
                   Jumlah Harga
                 </th>
                 <th className="text-end">{totalJumlahHarga}</th>
                 <th>
-                  <ReactToPrint
-                    trigger={() => (
-                      <Button variant="secondary" className="ms-2">
-                        <FontAwesomeIcon icon={faPrint} /> Cetak Struk Transaksi
-                      </Button>
-                    )}
-                    content={() => componentRef.current}
-                  />
+                <Button variant="secondary">
+                  <Link href={`${cashierServiceUrl}/detail-transaction/printpdf/${transactionId}`} passHref legacyBehavior>
+                    <a style={{color: 'var(--bs-btn-color)'}} target="_blank" rel="noopener noreferrer">
+                      <FontAwesomeIcon icon={faFilePdf} /> Cetak Struk
+                    </a>
+                  </Link>
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={() => handleOpenProcessModal()}>
+                  Proses Transaksi
+                </Button>
                 </th>
               </tr>
             </tfoot>
@@ -422,12 +570,16 @@ const DetailTransaction: React.FC = () => {
                   e.preventDefault();
                   handleSaveDetail();
                 }}>
+                  <Form.Group controlId="id_transaction" style={{ flex: 1 }}>
+                    <Form.Label>Transaction ID</Form.Label>
                     <Form.Control
-                      type="hidden"
+                      type="number"
                       name="id_transaction"
-                      value={transactionId}
-                    >
-                    </Form.Control>
+                      value={currentDetail?.id_transaction ?? ''}
+                      onChange={handleChange}
+                      disabled={!editing}
+                    />
+                  </Form.Group>
                   <Form.Group controlId="doctor" style={{ flex: 1 }}>
                     <Form.Label>Dokter</Form.Label>
                     <AsyncSelect
@@ -467,6 +619,15 @@ const DetailTransaction: React.FC = () => {
                     />
                   </Form.Group>
                 </Stack>
+                  <Form.Group controlId="discount" style={{ flex: 1 }}>
+                    <Form.Label>Diskon</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="discount"
+                      value={currentDetail?.discount || 0}
+                      onChange={handleChange}
+                    />
+                  </Form.Group>
               </Form>
             </Modal.Body>
             <Modal.Footer>
@@ -474,6 +635,52 @@ const DetailTransaction: React.FC = () => {
                 Batal
               </Button>
               <Button variant="primary" onClick={handleSaveDetail}>
+                Simpan
+              </Button>
+            </Modal.Footer>
+          </Modal>
+          <Modal show={showProcessModal} onHide={handleCloseProcessModal}>
+            <Modal.Header closeButton>
+              <Modal.Title>
+                Proses Transaksi
+              </Modal.Title>
+            </Modal.Header>
+            <Modal.Body>
+              <Form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  handleSaveDetail();
+                }}>
+                  <Form.Group controlId="payment_method" style={{ flex: 1 }}>
+                    <Form.Label>Metode Pembayaran</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      defaultValue={{
+                        value: currentTransaction?.payment_methode,
+                        label: currentTransaction?.payment_methode,
+                      }}
+                      onChange={handleSelectProcessChange}
+                      loadOptions={fetchPaymentMethodeOptions}
+                      name="payment_methode"
+                    />
+                  </Form.Group>
+                <Form.Group controlId="amount" style={{ flex: 1 }}>
+                    <Form.Label>Jumlah</Form.Label>
+                    <Form.Control
+                      type="number"
+                      name="amount"
+                      value={currentTransaction?.amount}
+                      onChange={handleProcessTransaction}
+                    />
+                  </Form.Group>                  
+              </Form>
+            </Modal.Body>
+            <Modal.Footer>
+              <Button variant="secondary" onClick={handleCloseProcessModal}>
+                Batal
+              </Button>
+              <Button variant="primary" onClick={handleProcess}>
                 Simpan
               </Button>
             </Modal.Footer>

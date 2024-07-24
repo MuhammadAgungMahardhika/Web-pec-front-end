@@ -1,19 +1,39 @@
 "use client";
 import Config from "@/app/config";
-import React, { useState, useEffect, ChangeEvent } from "react";
+import React, { useState, useEffect, ChangeEvent, useCallback } from "react";
 import { Stack, Button, Table, Modal, Form } from "react-bootstrap";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faCaretLeft, faCaretRight, faEdit, faInfo, faPlus, faSave, faTrash, faX } from "@fortawesome/free-solid-svg-icons";
 import LoadingSpinner from "@/app/components/spinner/spinner";
 import { SuccessToast, FailedToast } from "@/app/components/toast/toast";
 import Link from "next/link";
+import AsyncSelect from "react-select/async";
+
+interface Patient {
+  id: number;
+  name: string;
+}
+
+interface Doctor {
+  id: number;
+  name: string;
+}
+interface Outpatient {
+  id: number;
+  name: string;
+}
+
+interface Poli {
+  id: number;
+  name: string;
+}
 
 interface Transaction {
   id: number;
-  id_patient: number;
-  id_outpatient: number;
-  id_poli: number;
-  id_doctor: number;
+  id_patient: number | null;
+  id_outpatient: number | null;
+  id_poli: number | null;
+  id_doctor: number | null;
   date: string;
   payment_methode: string;
   total_transaction: number;
@@ -26,6 +46,11 @@ interface Transaction {
 interface Pagination {
   pageIndex: number;
   pageSize: number;
+}
+
+interface SelectOption {
+  value: number | null;
+  label: string | "";
 }
 
 const TransactionsPage: React.FC = () => {
@@ -41,6 +66,10 @@ const TransactionsPage: React.FC = () => {
     pageSize: 10,
   });
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [initialPatient, setInitialPatient] = useState<SelectOption | null>(null);
+  const [initialOutpatient, setInitialOutpatient] = useState<SelectOption | null>(null);
+  const [initialPoli, setInitialPoli] = useState<SelectOption | null>(null);
+  const [initialDoctor, setInitialDoctor] = useState<SelectOption | null>(null);
 
   useEffect(() => {
     const loadTransactions = async () => {
@@ -140,13 +169,68 @@ const TransactionsPage: React.FC = () => {
     if (transaction) {
       setCurrentTransaction(transaction);
       setIsEditMode(true);
+
+      if (transaction.id_patient && transaction.id_outpatient && transaction.id_poli && transaction.id_doctor) {
+        try {
+          const [patientResponse, outpatientResponse, poliResponse, doctorResponse] = await Promise.all([
+            fetch(`${cashierServiceUrl}/patient/${transaction.id_patient}`),
+            fetch(`${cashierServiceUrl}/outpatient/${transaction.id_outpatient}`),
+            fetch(`${cashierServiceUrl}/poli/${transaction.id_poli}`),
+            fetch(`${cashierServiceUrl}/doctor/${transaction.id_doctor}`),
+          ]);
+
+          if (!patientResponse.ok) {
+            throw new Error(patientResponse.statusText);
+          }
+          if (!outpatientResponse.ok) {
+            throw new Error(outpatientResponse.statusText);
+          }
+          if (!poliResponse.ok) {
+            throw new Error(poliResponse.statusText);
+          }
+          if (!doctorResponse.ok) {
+            throw new Error(doctorResponse.statusText);
+          }
+
+          const patientData = await patientResponse.json();
+          const outpatientData = await outpatientResponse.json();
+          const poliData = await poliResponse.json();
+          const doctorData = await doctorResponse.json();
+
+          setInitialPatient({
+            value: patientData.data.id,
+            label: patientData.data.name,
+          });
+          setInitialOutpatient({
+            value: outpatientData.data.id,
+            label: outpatientData.data.name,
+          });
+          setInitialPoli({
+            value: poliData.data.id,
+            label: poliData.data.name,
+          });
+          setInitialDoctor({
+            value: doctorData.data.id,
+            label: doctorData.data.name,
+          });
+        } catch (error: any) {
+          console.error("Failed to retrieve:", error);
+          FailedToast(`Failed to retrieve: ${error.message}`);
+        }
+      } else {
+        setInitialPatient(null);
+        setInitialOutpatient(null);
+        setInitialPoli(null);
+        setInitialDoctor(null);
+      }
+
     } else {
       setCurrentTransaction({
         id: 0,
-        id_patient: 0,
-        id_outpatient: 0,
-        id_poli: 0,
-        id_doctor: 0,
+        id_patient: null,
+        id_outpatient: null,
+        id_poli: null,
+        id_doctor: null,
         date: "",
         payment_methode: "",
         total_transaction: 0,
@@ -155,6 +239,10 @@ const TransactionsPage: React.FC = () => {
         return_amount: 0,
         payment_status: "",
       });
+      setInitialPatient(null);
+      setInitialOutpatient(null);
+      setInitialPoli(null);
+      setInitialDoctor(null);
       setIsEditMode(false);
     }
     setShowModal(true);
@@ -194,6 +282,118 @@ const TransactionsPage: React.FC = () => {
   const handleSearchChange = (e: ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
     setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
+  };
+
+  const loadPatientOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${cashierServiceUrl}/patient?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((patient: any) => ({
+          value: patient.id,
+          label: patient.name,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load patients:", error);
+        FailedToast("Failed to load patients:" + error.message);
+        return [];
+      }
+    },
+    [cashierServiceUrl]
+  );
+
+  const loadOutpatientOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${cashierServiceUrl}/outpatient?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((outpatient: any) => ({
+          value: outpatient.id,
+          label: outpatient.name,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load outpatients:", error);
+        FailedToast("Failed to load outpatients:" + error.message);
+        return [];
+      }
+    },
+    [cashierServiceUrl]
+  );
+
+  const loadPoliOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${cashierServiceUrl}/poli?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((poli: any) => ({
+          value: poli.id,
+          label: poli.name,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load polis:", error);
+        FailedToast("Failed to load polis:" + error.message);
+        return [];
+      }
+    },
+    [cashierServiceUrl]
+  );
+
+  const loadDoctorOption = useCallback(
+    async (inputValue: string) => {
+      try {
+        const response = await fetch(
+          `${cashierServiceUrl}/doctor?search=${inputValue}`
+        );
+        if (!response.ok) {
+          throw new Error(response.statusText);
+        }
+        const successResponse = await response.json();
+        const options = successResponse.data.map((doctor: any) => ({
+          value: doctor.id,
+          label: doctor.name,
+        }));
+
+        return options;
+      } catch (error: any) {
+        console.error("Failed to load doctors:", error);
+        FailedToast("Failed to load doctors:" + error.message);
+        return [];
+      }
+    },
+    [cashierServiceUrl]
+  );
+
+  const handleSelectChange = (
+    selectedOption: SelectOption | null,
+    action: any
+  ) => {
+    if (currentTransaction && action.name) {
+      setCurrentTransaction({
+        ...currentTransaction,
+        [action.name]: selectedOption ? selectedOption.value : 0,
+      });
+    }
   };
 
   if (loading) {
@@ -338,139 +538,64 @@ const TransactionsPage: React.FC = () => {
                   handleSaveTransaction();
                 }}
               >
-                <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formDate" style={{ flex: 1 }}>
-                    <Form.Label>
-                      Date
-                      <span className="text-danger"> * </span>
-                    </Form.Label>
-                    <Form.Control
-                      type="date"
-                      name="date"
-                      value={currentTransaction?.date || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Stack>
 
                 <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formPatientId" style={{ flex: 1 }}>
-                    <Form.Label>
-                      Patient ID
-                      <span className="text-danger"> * </span>
-                    </Form.Label>
-                    <Form.Control
-                      type="number"
+                  <Form.Group
+                    controlId="formPatientCategory"
+                    style={{ flex: 1 }}>
+                    <Form.Label>Pasien</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      defaultValue={initialPatient}
+                      onChange={handleSelectChange}
+                      loadOptions={loadPatientOption}
                       name="id_patient"
-                      value={currentTransaction?.id_patient || ""}
-                      onChange={handleChange}
                     />
                   </Form.Group>
-
-                  <Form.Group controlId="formOutpatientId" style={{ flex: 1 }}>
-                    <Form.Label>Outpatient ID</Form.Label>
-                    <Form.Control
-                      type="number"
+                  <Form.Group
+                    controlId="formOutpatientCategory"
+                    style={{ flex: 1 }}>
+                    <Form.Label>Rawat Jalan</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      defaultValue={initialOutpatient}
+                      onChange={handleSelectChange}
+                      loadOptions={loadOutpatientOption}
                       name="id_outpatient"
-                      value={currentTransaction?.id_outpatient || ""}
-                      onChange={handleChange}
                     />
                   </Form.Group>
                 </Stack>
 
                 <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formPoliId" style={{ flex: 1 }}>
-                    <Form.Label>Poli ID</Form.Label>
-                    <Form.Control
-                      type="number"
+                  <Form.Group
+                    controlId="formPoliCategory"
+                    style={{ flex: 1 }}>
+                    <Form.Label>Poli</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      defaultValue={initialPoli}
+                      onChange={handleSelectChange}
+                      loadOptions={loadPoliOption}
                       name="id_poli"
-                      value={currentTransaction?.id_poli || ""}
-                      onChange={handleChange}
                     />
                   </Form.Group>
-
-                  <Form.Group controlId="formDoctorId" style={{ flex: 1 }}>
-                    <Form.Label>Doctor ID</Form.Label>
-                    <Form.Control
-                      type="number"
+                  <Form.Group
+                    controlId="formDoctorCategory"
+                    style={{ flex: 1 }}>
+                    <Form.Label>Dokter</Form.Label>
+                    <AsyncSelect
+                      cacheOptions
+                      defaultOptions
+                      defaultValue={initialDoctor}
+                      onChange={handleSelectChange}
+                      loadOptions={loadDoctorOption}
                       name="id_doctor"
-                      value={currentTransaction?.id_doctor || ""}
-                      onChange={handleChange}
                     />
                   </Form.Group>
                 </Stack>
-
-                <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formPaymentMethode" style={{ flex: 1 }}>
-                    <Form.Label>Payment Method</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="payment_methode"
-                      value={currentTransaction?.payment_methode || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Stack>
-
-                <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formTotalTransaction" style={{ flex: 1 }}>
-                    <Form.Label>
-                      Total Transaction
-                      <span className="text-danger"> * </span>
-                    </Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="total_transaction"
-                      value={currentTransaction?.total_transaction || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="formUpfrontPayment" style={{ flex: 1 }}>
-                    <Form.Label>Upfront Payment</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="upfront_payment"
-                      value={currentTransaction?.upfront_payment || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Stack>
-
-                <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formRemainingPayment" style={{ flex: 1 }}>
-                    <Form.Label>Remaining Payment</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="remaining_payment"
-                      value={currentTransaction?.remaining_payment || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-
-                  <Form.Group controlId="formReturnAmount" style={{ flex: 1 }}>
-                    <Form.Label>Return Amount</Form.Label>
-                    <Form.Control
-                      type="number"
-                      name="return_amount"
-                      value={currentTransaction?.return_amount || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Stack>
-
-                <Stack direction="horizontal" gap={2} className="mb-2">
-                  <Form.Group controlId="formPaymentStatus" style={{ flex: 1 }}>
-                    <Form.Label>Payment Status</Form.Label>
-                    <Form.Control
-                      type="text"
-                      name="payment_status"
-                      value={currentTransaction?.payment_status || ""}
-                      onChange={handleChange}
-                    />
-                  </Form.Group>
-                </Stack>
-
               </Form>
             </Modal.Body>
             <Modal.Footer>
