@@ -99,10 +99,10 @@ const ServicesPage: React.FC = () => {
               : product
           )
         );
-        SuccessToast("Berhasil mengedit produk");
+        SuccessToast("Berhasil mengedit layanan");
       } else {
         setServices((prev) => [updatedService.data, ...prev]);
-        SuccessToast("Berhasil menambahkan produk");
+        SuccessToast("Berhasil menambahkan layanan");
       }
 
       setShowModal(false);
@@ -193,7 +193,6 @@ const ServicesPage: React.FC = () => {
     setPagination((prev) => ({ ...prev, pageIndex: 1 })); // Reset to first page on search
   };
 
-
   const handleSelectChange = (
     selectedOption: SelectOption | null,
     action: any
@@ -213,19 +212,20 @@ const ServicesPage: React.FC = () => {
     <div className="container mt-4">
       <div className="card">
         <div className="card-header">
-          <h3>Produk Obat</h3>
+          <h3>Layanan</h3>
         </div>
         <div className="card-body">
           <Stack direction="horizontal" gap={2} className="mb-3">
             <Button
               variant="primary"
               onClick={() => handleOpenModal()}
-              title="Tambah produk">
+              title="Tambah produk"
+            >
               <FontAwesomeIcon icon={faPlus} />
             </Button>
             <Form.Control
               type="text"
-              placeholder="Cari produk..."
+              placeholder="Cari layanan..."
               value={searchQuery}
               onChange={handleSearchChange}
               className="ms-auto"
@@ -235,12 +235,15 @@ const ServicesPage: React.FC = () => {
           <Table striped bordered hover responsive>
             <thead>
               <tr>
-                <th>#</th>
-                <th>Kode Layanan</th>
+                <th style={{ width: "0%" }}>No</th>
+                <th className="text-center" style={{ width: "0%" }}>
+                  Aksi
+                </th>
+                <th style={{ width: "0%" }}>Kode Layanan</th>
                 <th>Nama</th>
-                <th className="text-end">Harga</th>
-
-                <th className="text-center">Aksi</th>
+                <th className="text-end" style={{ width: "0%" }}>
+                  Harga
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -251,26 +254,28 @@ const ServicesPage: React.FC = () => {
                       index +
                       1}
                   </td>
-                  <td>{service.code_of_service}</td>
-                  <td>{service.name}</td>
-                  <td className="text-end">{service.price}</td>
                   <td>
-                    <Stack direction="horizontal" gap={2}>
+                    <div className="d-flex flex-row justify-content-center align-items-center gap-1">
                       <Button
                         variant="primary"
                         className="me-2 btn-sm"
                         title="ubah informasi layanan"
-                        onClick={() => handleOpenModal(service)}>
+                        onClick={() => handleOpenModal(service)}
+                      >
                         <FontAwesomeIcon icon={faEdit} size="xs" />
                       </Button>
                       <Button
                         variant="danger"
                         className="btn-sm"
-                        onClick={() => handleOpenDeleteModal(service)}>
+                        onClick={() => handleOpenDeleteModal(service)}
+                      >
                         <FontAwesomeIcon icon={faTrash} size="xs" />
                       </Button>
-                    </Stack>
+                    </div>
                   </td>
+                  <td>{service.code_of_service}</td>
+                  <td>{service.name}</td>
+                  <td className="text-end">{service.price}</td>
                 </tr>
               ))}
             </tbody>
@@ -281,20 +286,23 @@ const ServicesPage: React.FC = () => {
             <Button
               disabled={pagination.pageIndex === 1}
               onClick={() => handlePageChange(1)}
-              className="me-2">
+              className="me-2"
+            >
               {"Terbaru"}
             </Button>
             <Button
               disabled={pagination.pageIndex === 1}
               onClick={() => handlePageChange(pagination.pageIndex - 1)}
-              className="me-2">
+              className="me-2"
+            >
               <FontAwesomeIcon icon={faCaretLeft}></FontAwesomeIcon>
               {"Sebelumnya"}
             </Button>
             <Button
               disabled={services.length < pagination.pageSize}
               onClick={() => handlePageChange(pagination.pageIndex + 1)}
-              className="me-2">
+              className="me-2"
+            >
               {"Selanjutnya"}
               <FontAwesomeIcon icon={faCaretRight}></FontAwesomeIcon>
             </Button>
@@ -303,7 +311,8 @@ const ServicesPage: React.FC = () => {
               value={pagination.pageSize}
               onChange={handlePageSizeChange}
               className="ms-2"
-              style={{ width: "auto", display: "inline-block" }}>
+              style={{ width: "auto", display: "inline-block" }}
+            >
               <option value={10}>10</option>
               <option value={25}>25</option>
               <option value={50}>50</option>
@@ -322,9 +331,9 @@ const ServicesPage: React.FC = () => {
                 onSubmit={(e) => {
                   e.preventDefault();
                   handleSaveService();
-                }}>
+                }}
+              >
                 <Stack direction="horizontal" gap={2} className="mb-2">
-
                   <Form.Group controlId="formName" style={{ flex: 1 }}>
                     <Form.Label>
                       Nama
@@ -357,7 +366,8 @@ const ServicesPage: React.FC = () => {
                 <Form.Group
                   controlId="formCodeOfService"
                   className="mb-2"
-                  style={{ flex: 1 }}>
+                  style={{ flex: 1 }}
+                >
                   <Form.Label>Kode Layanan</Form.Label>
                   <Form.Control
                     type="text"
@@ -366,7 +376,6 @@ const ServicesPage: React.FC = () => {
                     onChange={handleChange}
                   />
                 </Form.Group>
-
               </Form>
             </Modal.Body>
             <Modal.Footer>

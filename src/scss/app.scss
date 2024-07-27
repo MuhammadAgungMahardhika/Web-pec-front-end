@@ -19,3 +19,7 @@ body .bi::before, [class^=bi-]::before, [class*=" bi-"]::before {
 
 // Mazer CSS
 @import "./mazer";
+
+:root, *, body {
+    font-variant-numeric: tabular-nums;
+}

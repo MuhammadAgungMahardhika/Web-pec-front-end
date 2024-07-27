@@ -590,11 +590,11 @@ $aspect-ratios: (
 // Font, line-height, and color for body text, headings, and more.
 
 // stylelint-disable value-keyword-case
-$font-family-sans-serif:      system-ui, -apple-system, BlinkMacSystemFont,
+$font-family-sans-serif:      Geist, system-ui, -apple-system, BlinkMacSystemFont,
 "Noto Sans", "Noto Sans Arabic", "Noto Color Emoji", sans-serif !default;
-$font-family-monospace:       SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !default;
+$font-family-monospace:       "Geist Mono", SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace !default;
 // stylelint-enable value-keyword-case
-$font-family-base:            "Noto Sans" !default;
+$font-family-base:            Geist !default;
 $font-family-code:            var(--#{$variable-prefix}font-monospace) !default;
 
 // $font-size-root effects the value of `rem`, which is used for as well font sizes, paddings and margins
