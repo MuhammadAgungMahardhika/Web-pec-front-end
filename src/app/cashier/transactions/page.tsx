@@ -342,7 +342,7 @@ const TransactionsPage: React.FC = () => {
                 </th>
                 <th>Nomor Registrasi</th>
                 <th>Nama Pasien</th>
-                <th>Tanggal</th>
+                <th style={{ width: "0%" }}>Tanggal</th>
                 <th style={{ width: "0%" }}>Metode Bayar</th>
                 <th className="text-end" style={{ width: "0%" }}>
                   Total Harga
@@ -398,9 +398,11 @@ const TransactionsPage: React.FC = () => {
                       </Button>
                     </div>
                   </td>
-                  <td>{transaction.outpatient.no_registration}</td>
+                  <td className="text-nowrap">
+                    {transaction.outpatient.no_registration}
+                  </td>
                   <td>{transaction.outpatient.patient_name}</td>
-                  <td>{transaction.date}</td>
+                  <td className="text-nowrap">{transaction.date}</td>
                   <td>{transaction.payment_methode}</td>
                   <td className="text-end">{transaction.total_transaction}</td>
                   <td className="text-end">{transaction.remaining_payment}</td>

@@ -563,13 +563,23 @@ const DetailTransaction: React.FC = () => {
           >
             <thead>
               <tr>
-                <th>No</th>
+                <th style={{ width: "0%" }}>No</th>
                 <th>Nama Layanan</th>
-                <th className="text-end">Jumlah</th>
-                <th className="text-end">Harga</th>
-                <th className="text-end">Diskon</th>
-                <th className="text-end">Total harga</th>
-                <th className="text-center">Aksi</th>
+                <th className="text-end" style={{ width: "0%" }}>
+                  Jumlah
+                </th>
+                <th className="text-end" style={{ width: "0%" }}>
+                  Harga
+                </th>
+                <th className="text-end" style={{ width: "0%" }}>
+                  Diskon
+                </th>
+                <th className="text-end" style={{ width: "0%" }}>
+                  Total harga
+                </th>
+                <th className="text-center" style={{ width: "0%" }}>
+                  Aksi
+                </th>
               </tr>
             </thead>
             <tbody>
