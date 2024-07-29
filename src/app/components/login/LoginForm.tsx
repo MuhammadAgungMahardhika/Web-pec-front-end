@@ -7,7 +7,7 @@ import Col from "react-bootstrap/Col";
 import Form from "react-bootstrap/Form";
 import Row from "react-bootstrap/Row";
 
-function LoginForm({props}) {
+function LoginForm({ props }) {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -78,8 +78,9 @@ function LoginForm({props}) {
           if (getUserResponse.ok) {
             const userData = await getUserResponse.json();
             sessionStorage.setItem("user", JSON.stringify(userData.data));
+            sessionStorage.setItem("access_token", access_token);
             console.log(userData);
-            router.push("/transaction");
+            router.push("/cashier/transactions");
           } else {
             const errorData = await getUserResponse.json();
             console.log(errorData);

@@ -24,6 +24,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { FailedToast, SuccessToast } from "@/app/components/toast/toast";
 import Config from "@/app/config";
+import { formatNumber } from "@/app/utils/formatNumber";
 interface Outpatient {
   id: number;
   no_registration: string;
@@ -398,7 +399,7 @@ const DetailTransaction: React.FC = () => {
         const successResponse = await response.json();
         return successResponse.data.map((services: any) => ({
           value: services.id,
-          label: services.name,
+          label: services.name + " - " + services.code_of_service,
         }));
       } catch (error) {
         console.error("Gagal mendapatkan layanan:", error);
@@ -588,10 +589,14 @@ const DetailTransaction: React.FC = () => {
                   <td>{index + 1}</td>
                   <td>{detail.service.name}</td>
                   <td className="text-end">{detail.quantity}</td>
-                  <td className="text-end">{detail.service.price}</td>
-                  <td className="text-end">{detail.discount}</td>
                   <td className="text-end">
-                    {detail.quantity * detail.service.price - detail.discount}
+                    {formatNumber(detail.service.price)}
+                  </td>
+                  <td className="text-end">{formatNumber(detail.discount)}</td>
+                  <td className="text-end">
+                    {formatNumber(
+                      detail.quantity * detail.service.price - detail.discount
+                    )}
                   </td>
                   <td>
                     <div className="d-flex flex-row justify-content-center align-items-center gap-1">
@@ -621,7 +626,7 @@ const DetailTransaction: React.FC = () => {
                 <th className="text-end" colSpan={5}>
                   Jumlah Harga
                 </th>
-                <th className="text-end">{totalJumlahHarga}</th>
+                <th className="text-end">{formatNumber(totalJumlahHarga)}</th>
                 <th rowSpan={4}>
                   <div className="d-flex flex-column justify-content-center align-items-center gap-1">
                     <Button
@@ -655,13 +660,17 @@ const DetailTransaction: React.FC = () => {
                 <th className="text-end" colSpan={5}>
                   Terima Uang
                 </th>
-                <th className="text-end">{transaction?.amount ?? 0}</th>
+                <th className="text-end">
+                  {formatNumber(transaction?.amount ?? 0)}
+                </th>
               </tr>
               <tr>
                 <th className="text-end" colSpan={5}>
                   Uang Kembali
                 </th>
-                <th className="text-end">{transaction?.return_amount ?? 0}</th>
+                <th className="text-end">
+                  {formatNumber(transaction?.return_amount ?? 0)}
+                </th>
               </tr>
               <tr>
                 <th className="text-end" colSpan={5}>
@@ -700,7 +709,10 @@ const DetailTransaction: React.FC = () => {
                       defaultOptions
                       defaultValue={{
                         value: currentDetail?.service.id,
-                        label: currentDetail?.service.name,
+                        label:
+                          currentDetail?.service.name +
+                          " - " +
+                          currentDetail?.service.code_of_service,
                       }}
                       onChange={handleSelectChange}
                       loadOptions={loadServiceOptions}

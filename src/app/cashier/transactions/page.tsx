@@ -17,6 +17,7 @@ import LoadingSpinner from "@/app/components/spinner/spinner";
 import { SuccessToast, FailedToast } from "@/app/components/toast/toast";
 import Link from "next/link";
 import AsyncSelect from "react-select/async";
+import { formatNumber } from "@/app/utils/formatNumber";
 
 interface Outpatient {
   id: number;
@@ -77,8 +78,18 @@ const TransactionsPage: React.FC = () => {
   useEffect(() => {
     const loadTransactions = async () => {
       try {
+        const token = sessionStorage.getItem("access_token");
+        if (!token) {
+          throw new Error("No access token found");
+        }
+
         const response = await fetch(
-          `${cashierServiceUrl}/transaction?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`
+          `${cashierServiceUrl}/transaction?page=${pagination.pageIndex}&per_page=${pagination.pageSize}&search=${searchQuery}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
         );
         if (!response.ok) {
           throw new Error(response.statusText);
@@ -102,11 +113,17 @@ const TransactionsPage: React.FC = () => {
       ? `${cashierServiceUrl}/transaction/${currentTransaction.id}`
       : `${cashierServiceUrl}/transaction`;
 
+    const token = sessionStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("No access token found");
+    }
+
     try {
       const response = await fetch(url, {
         method,
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(currentTransaction),
       });
@@ -141,6 +158,12 @@ const TransactionsPage: React.FC = () => {
 
   const handleDeleteTransaction = async () => {
     if (!currentTransaction) return;
+
+    const token = sessionStorage.getItem("access_token");
+    if (!token) {
+      throw new Error("No access token found");
+    }
+
     try {
       const response = await fetch(
         `${cashierServiceUrl}/transaction/${currentTransaction.id}`,
@@ -148,6 +171,7 @@ const TransactionsPage: React.FC = () => {
           method: "DELETE",
           headers: {
             "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
           },
         }
       );
@@ -404,10 +428,18 @@ const TransactionsPage: React.FC = () => {
                   <td>{transaction.outpatient.patient_name}</td>
                   <td className="text-nowrap">{transaction.date}</td>
                   <td>{transaction.payment_methode}</td>
-                  <td className="text-end">{transaction.total_transaction}</td>
-                  <td className="text-end">{transaction.remaining_payment}</td>
-                  <td className="text-end">{transaction.amount}</td>
-                  <td className="text-end">{transaction.return_amount}</td>
+                  <td className="text-end">
+                    {formatNumber(transaction.total_transaction)}
+                  </td>
+                  <td className="text-end">
+                    {formatNumber(transaction.remaining_payment)}
+                  </td>
+                  <td className="text-end">
+                    {formatNumber(transaction.amount)}
+                  </td>
+                  <td className="text-end">
+                    {formatNumber(transaction.return_amount)}
+                  </td>
                   <td>{transaction.payment_status}</td>
                 </tr>
               ))}

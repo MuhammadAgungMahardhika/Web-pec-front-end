@@ -12,7 +12,7 @@ const isTokenExpired = (token: any) => {
   }
 };
 
-export function authMiddleware(req: NextRequest) {
+export async function authMiddleware(req: NextRequest) {
   const accessToken = req.cookies.get("access_token")?.value;
   const refreshToken = req.cookies.get("refresh_token")?.value;
 
@@ -22,44 +22,44 @@ export function authMiddleware(req: NextRequest) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // if (isTokenExpired(accessToken)) {
-  //   const endpoint: string = process.env.AUTHSERVICE_URL || "";
+  if (isTokenExpired(accessToken)) {
+    const endpoint: string = process.env.AUTHSERVICE_URL || "";
 
-  //   try {
-  //     console.log("token expired detected");
-  //     const response = await fetch(endpoint + "/refresh", {
-  //       method: "POST",
-  //       headers: {
-  //         "Content-Type": "application/json",
-  //         Authorization: `Bearer ${refreshToken}`,
-  //       },
-  //     });
+    try {
+      console.log("token expired detected");
+      const response = await fetch(endpoint + "/refresh", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${refreshToken}`,
+        },
+      });
 
-  //     if (!response.ok) {
-  //       return NextResponse.redirect(new URL("/login", req.url));
-  //     }
+      if (!response.ok) {
+        return NextResponse.redirect(new URL("/login", req.url));
+      }
 
-  //     const { access_token, refresh_token } = await response.json();
+      const { access_token, refresh_token } = await response.json();
 
-  //     const res = NextResponse.next();
-  //     res.headers.set(
-  //       "Set-Cookie",
-  //       `access_token=${access_token}; Path=/; HttpOnly; Secure=${
-  //         process.env.NODE_ENV !== "development"
-  //       }`
-  //     );
-  //     res.headers.set(
-  //       "Set-Cookie",
-  //       `refresh_token=${refresh_token}; Path=/; HttpOnly; Secure=${
-  //         process.env.NODE_ENV !== "development"
-  //       }`
-  //     );
-  //     console.log("new token");
-  //     return res;
-  //   } catch (error) {
-  //     return NextResponse.redirect(new URL("/login", req.url));
-  //   }
-  // }
+      const res = NextResponse.next();
+      res.headers.set(
+        "Set-Cookie",
+        `access_token=${access_token}; Path=/; HttpOnly; Secure=${
+          process.env.NODE_ENV !== "development"
+        }`
+      );
+      res.headers.set(
+        "Set-Cookie",
+        `refresh_token=${refresh_token}; Path=/; HttpOnly; Secure=${
+          process.env.NODE_ENV !== "development"
+        }`
+      );
+      console.log("new token");
+      return res;
+    } catch (error) {
+      return NextResponse.redirect(new URL("/login", req.url));
+    }
+  }
 
   return NextResponse.next();
 }
